@@ -35,155 +35,24 @@ struct ContentView: View {
 
     var body: some View {
         TabView {
-            mainView
-                .tabItem {
-                    Label("Main", systemImage: "house")
-                }
-            SectionListsView(sections: sections, items: itemsQuery)
+            MainTabView(
+                newTaskText: $newTaskText,
+                isInputFieldFocused: $isInputFieldFocused,
+                focusedItemID: $focusedItemID,
+                selectedSection: $selectedSection,
+                isShowingNewSectionSheet: $isShowingNewSectionSheet,
+                isShowingEditSectionSheet: $isShowingEditSectionSheet,
+                sectionToEdit: $sectionToEdit,
+                sectionToDelete: $sectionToDelete,
+                isShowingDeleteConfirmation: $isShowingDeleteConfirmation
+            )
+            .tabItem {
+                Label("Main", systemImage: "house")
+            }
+            ListTabView(sections: sections, items: itemsQuery)
                 .tabItem {
                     Label("Lists", systemImage: "list.bullet.rectangle")
                 }
-        }
-    }
-
-    // MARK: - Main Tab View
-    private var mainView: some View {
-        NavigationStack {
-            VStack {
-                // MARK: Section Selector
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
-                        ForEach(sections) { section in
-                            Button(action: {
-                                selectSection(section)
-                            }) {
-                                Text(section.name)
-                                    .padding(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.fromName(section.colorName), lineWidth: 2)
-                                            )
-                                    )
-                                    .foregroundColor(.black)
-                            }
-                            .contextMenu {
-                                if section.isEditable {
-                                    Button("Edit Section") {
-                                        sectionToEdit = section
-                                        isShowingEditSectionSheet = true
-                                    }
-                                    Button("Delete Section", role: .destructive) {
-                                        sectionToDelete = section
-                                        isShowingDeleteConfirmation = true
-                                    }
-                                } else {
-                                    Text("This section cannot be edited or deleted")
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.top)
-
-                // Input Section
-                HStack {
-                    Picker(selection: $selectedSection, label: Image(systemName: "folder")) {
-                        ForEach(sections) { section in
-                            Text(section.name).tag(Optional(section))
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                    .frame(width: 120)
-
-                    TextField("Enter task", text: $newTaskText)
-                        .padding()
-                        .background(Color(Color.fromName(selectedSection?.colorName ?? ".gray")))
-                        .cornerRadius(16)
-                        .font(.system(size: 18))
-                        .focused($isInputFieldFocused)
-                        .tint(Color.fromName(selectedSection?.colorName ?? ".gray"))
-                        .onSubmit {
-                            addItem()
-                            isInputFieldFocused = true
-                        }
-                }
-                .padding(.horizontal)
-                .padding(.vertical)
-
-                // MARK: Task List
-                List {
-                    ForEach(sortedItems) { item in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4.0) {
-                                TextField("Task Name", text: Binding(
-                                    get: { item.taskText },
-                                    set: { newValue in
-                                        item.taskText = newValue
-                                        try? modelContext.save()
-                                    }
-                                ))
-                                .focused($focusedItemID, equals: item.id)
-                                .onTapGesture {
-                                    focusedItemID = item.id
-                                }
-
-                                Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .shortened))
-                                    .font(.footnote)
-                                    .foregroundColor(.black)
-                            }
-                            .padding(.leading, 10)
-
-                            Spacer()
-
-                            Button(action: {
-                                toggleTaskCompletion(item)
-                            }) {
-                                Image(systemName: item.taskComplete ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(.black)
-                                    .font(.title2)
-                            }
-                            .padding(.trailing, 10)
-                        }
-                        .padding(.vertical, 8)
-                        .background(Color.fromName(selectedSection?.colorName ?? ".gray"))
-                        .cornerRadius(8)
-                        .listRowBackground(Color(UIColor.systemBackground))
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSpacing(20)
-                    }
-                    .onMove(perform: moveItems)
-                    .onDelete(perform: deleteItems)
-                }
-                .listRowSpacing(10)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("New Section") {
-                        isShowingNewSectionSheet = true
-                    }
-                }
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-            }
-            .onAppear {
-                if sectionsQuery.isEmpty {
-                    initializeDefaultSection()
-                } else {
-                    restoreLastSelectedSection()
-                }
-
-                if selectedSection == nil {
-                    selectedSection = sectionsQuery.first
-                }
-            }
-            .navigationTitle("AnyTask")
-            .navigationBarTitleDisplayMode(.large)
         }
         .sheet(isPresented: $isShowingNewSectionSheet) {
             NewSectionView { sectionName, colorName in
@@ -302,33 +171,6 @@ struct ContentView: View {
         if let lastSelectedID = UserDefaults.standard.string(forKey: "LastSelectedSectionID"),
            let lastSection = sectionsQuery.first(where: { $0.id.uuidString == lastSelectedID }) {
             selectedSection = lastSection
-        }
-    }
-}
-
-// MARK: - Lists Tab View
-struct SectionListsView: View {
-    let sections: [TaskSection]
-    let items: [Item]
-
-    var body: some View {
-        NavigationStack {
-            List {
-                ForEach(sections) { section in
-                    Section(header: Text(section.name)) {
-                        ForEach(items.filter { $0.parentSection == section }.sorted { $0.order < $1.order }) { item in
-                            HStack {
-                                Text(item.taskText)
-                                if item.taskComplete {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.green)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            .navigationTitle("Lists")
         }
     }
 }
