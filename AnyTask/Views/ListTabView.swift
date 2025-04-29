@@ -94,7 +94,8 @@ struct ListTabView: View {
                     .onMove(perform: moveItems)
                     .onDelete(perform: deleteItems)
                 }
-                .listStyle(.plain)
+                .listRowSpacing(10)
+                //.listStyle(.plain)
             }
             .onAppear {
                 if selectedSection == nil {

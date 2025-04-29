@@ -36,115 +36,9 @@ struct MainTabView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                // MARK: Section Selector
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack {
-                        ForEach(sections) { section in
-                            Button(action: {
-                                selectSection(section)
-                            }) {
-                                Text(section.name)
-                                    .padding(10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .fill(selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(Color.fromName(section.colorName), lineWidth: 2)
-                                            )
-                                    )
-                                    .foregroundColor(.black)
-                            }
-                            .contextMenu {
-                                if section.isEditable {
-                                    Button("Edit Section") {
-                                        sectionToEdit = section
-                                        isShowingEditSectionSheet = true
-                                    }
-                                    Button("Delete Section", role: .destructive) {
-                                        sectionToDelete = section
-                                        isShowingDeleteConfirmation = true
-                                    }
-                                } else {
-                                    Text("This section cannot be edited or deleted")
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal)
-                }
-                .padding(.top)
-
-                // Input Section
-                HStack {
-                    Picker(selection: $selectedSection, label: Image(systemName: "folder")) {
-                        ForEach(sections) { section in
-                            Text(section.name).tag(Optional(section))
-                        }
-                    }
-                    .pickerStyle(MenuPickerStyle())
-                    .frame(width: 120)
-
-                    TextField("Enter task", text: $newTaskText)
-                        .padding()
-                        .background(Color(Color.fromName(selectedSection?.colorName ?? ".gray")))
-                        .cornerRadius(16)
-                        .font(.system(size: 18))
-                        .focused($isInputFieldFocused)
-                        .tint(Color.fromName(selectedSection?.colorName ?? ".gray"))
-                        .onSubmit {
-                            addItem()
-                            isInputFieldFocused = true
-                        }
-                }
-                .padding(.horizontal)
-                .padding(.vertical)
-
-                // MARK: Task List
-                List {
-                    ForEach(sortedItems) { item in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4.0) {
-                                TextField("Task Name", text: Binding(
-                                    get: { item.taskText },
-                                    set: { newValue in
-                                        item.taskText = newValue
-                                        try? modelContext.save()
-                                    }
-                                ))
-                                .focused($focusedItemID, equals: item.id)
-                                .onTapGesture {
-                                    focusedItemID = item.id
-                                }
-
-                                Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .shortened))
-                                    .font(.footnote)
-                                    .foregroundColor(.black)
-                            }
-                            .padding(.leading, 10)
-
-                            Spacer()
-
-                            Button(action: {
-                                toggleTaskCompletion(item)
-                            }) {
-                                Image(systemName: item.taskComplete ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(.black)
-                                    .font(.title2)
-                            }
-                            .padding(.trailing, 10)
-                        }
-                        .padding(.vertical, 8)
-                        .background(Color.fromName(selectedSection?.colorName ?? ".gray"))
-                        .cornerRadius(8)
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets())
-                    }
-                    .onMove(perform: moveItems)
-                    .onDelete(perform: deleteItems)
-                }
-                .listStyle(.plain)
+                sectionSelector
+                inputSection
+                taskList
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -170,6 +64,120 @@ struct MainTabView: View {
             .navigationTitle("AnyTask")
             .navigationBarTitleDisplayMode(.large)
         }
+    }
+
+    // MARK: - Extracted Subviews
+    private var sectionSelector: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack {
+                ForEach(sections) { section in
+                    Button(action: {
+                        selectSection(section)
+                    }) {
+                        Text(section.name)
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                    )
+                            )
+                            .foregroundColor(.black)
+                    }
+                    .contextMenu {
+                        if section.isEditable {
+                            Button("Edit Section") {
+                                sectionToEdit = section
+                                isShowingEditSectionSheet = true
+                            }
+                            Button("Delete Section", role: .destructive) {
+                                sectionToDelete = section
+                                isShowingDeleteConfirmation = true
+                            }
+                        } else {
+                            Text("This section cannot be edited or deleted")
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+        .padding(.top)
+    }
+
+    private var inputSection: some View {
+        HStack {
+            TextField("Enter task", text: $newTaskText)
+                .padding()
+                .background(Color(Color.fromName(selectedSection?.colorName ?? ".gray")))
+                .cornerRadius(16)
+                .font(.system(size: 18))
+                .focused($isInputFieldFocused)
+                .tint(Color.fromName(selectedSection?.colorName ?? ".gray"))
+                .onSubmit {
+                    addItem()
+                    isInputFieldFocused = true
+                }
+        }
+        .padding(.horizontal)
+        .padding(.vertical)
+    }
+
+    private var taskList: some View {
+        List {
+            ForEach(sortedItems) { item in
+                HStack {
+                    VStack(alignment: .leading, spacing: 4.0) {
+                        TextField("Task Name", text: Binding(
+                            get: { item.taskText },
+                            set: { newValue in
+                                item.taskText = newValue
+                                try? modelContext.save()
+                            }
+                        ))
+                        .focused($focusedItemID, equals: item.id)
+                        .onTapGesture {
+                            focusedItemID = item.id
+                        }
+
+                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .shortened))
+                            .font(.footnote)
+                            .foregroundColor(.black)
+                    }
+                    .padding(.leading, 10)
+
+                    Spacer()
+
+                    Button(action: {
+                        toggleTaskCompletion(item)
+                    }) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.black, lineWidth: 2)
+                                .frame(width: 28, height: 28)
+                            if item.taskComplete {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(.black)
+                            }
+                        }
+                    }
+                    .font(.title2)
+                    .padding(.trailing, 10)
+                }
+                .padding(.vertical, 8)
+                .background(Color.fromName(selectedSection?.colorName ?? ".gray"))
+                .cornerRadius(8)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets())
+            }
+            .onMove(perform: moveItems)
+            .onDelete(perform: deleteItems)
+        }
+        .listRowSpacing(10)
+        //.listStyle(.plain)
     }
 
     // MARK: - Functions
