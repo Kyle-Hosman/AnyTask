@@ -125,60 +125,95 @@ struct ContentView: View {
     }
 
     // MARK: - Section Selector
+    // In ContentView.swift
+
     private var sectionSelector: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack {
-                ForEach(sections) { section in
-                    Button(action: {
-                        if editModeState == .active && selectedSection?.name == "General" {
-                            if section.id != selectedSection?.id {
-                                pendingSection = section
-                            }
-                        } else {
-                            selectSection(section)
-                            pendingSection = nil
-                        }
-                    }) {
-                        Text(section.name)
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(
-                                        (editModeState == .active && selectedSection?.name == "General" && section.id == pendingSection?.id)
-                                        ? Color.fromName(section.colorName)
-                                        : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(Color.fromName(section.colorName), lineWidth: 2)
-                                    )
-                            )
-                            .foregroundColor(.black)
-                            .opacity(
-                                (editModeState == .active && selectedSection?.name == "General" && section.id != selectedSection?.id)
-                                ? 0.7 : 1.0
-                            )
+        VStack(spacing: 0) {
+            // Find the "Any" section (was "General")
+            if let anySection = sections.first(where: { $0.name == "General" }) {
+                Button(action: {
+                    if editModeState == .active && selectedSection?.name == "General" {
+                        // Do nothing or reset pendingSection if needed
+                    } else {
+                        selectSection(anySection)
+                        pendingSection = nil
                     }
-                    .contextMenu {
-                        if section.isEditable {
-                            Button("Edit Section") {
-                                sectionToEdit = section
-                                isShowingEditSectionSheet = true
+                }) {
+                    Text("Any")
+                        .frame(maxWidth: .infinity)
+                        .padding(14)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(selectedSection?.id == anySection.id ? Color.fromName(anySection.colorName) : Color.clear)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.fromName(anySection.colorName), lineWidth: 2)
+                                )
+                        )
+                        .foregroundColor(.black)
+                        .font(.headline)
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 6)
+            }
+
+            // Show all other sections except "General"/"Any"
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(sections.filter { $0.name != "General" }) { section in
+                        Button(action: {
+                            if editModeState == .active && selectedSection?.name == "General" {
+                                if section.id != selectedSection?.id {
+                                    pendingSection = section
+                                }
+                            } else {
+                                selectSection(section)
+                                pendingSection = nil
                             }
-                            Button("Delete Section", role: .destructive) {
-                                sectionToDelete = section
-                                isShowingDeleteConfirmation = true
+                        }) {
+                            Text(section.name)
+                                .padding(10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(
+                                            (editModeState == .active && selectedSection?.name == "General" && section.id == pendingSection?.id)
+                                            ? Color.fromName(section.colorName)
+                                            : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                        )
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                        )
+                                )
+                                .foregroundColor(.black)
+                                .opacity(
+                                    (editModeState == .active && selectedSection?.name == "General" && section.id != selectedSection?.id)
+                                    ? 0.7 : 1.0
+                                )
+                        }
+                        .contextMenu {
+                            if section.isEditable {
+                                Button("Edit Section") {
+                                    sectionToEdit = section
+                                    isShowingEditSectionSheet = true
+                                }
+                                Button("Delete Section", role: .destructive) {
+                                    sectionToDelete = section
+                                    isShowingDeleteConfirmation = true
+                                }
+                            } else {
+                                Text("This section cannot be edited or deleted")
                             }
-                        } else {
-                            Text("This section cannot be edited or deleted")
                         }
                     }
                 }
+                .padding(.horizontal)
             }
-            .padding(.horizontal)
+            .padding(.top, 0)
         }
         .padding(.top)
     }
+    
     
     // MARK: - TextField
     private var inputSection: some View {
@@ -374,7 +409,7 @@ struct ContentView: View {
     }
 
     private func initializeDefaultSection() {
-        let generalSection = TaskSection(name: "General", colorName: ".gray", isEditable: false, order: 0)
+        let generalSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0)
         modelContext.insert(generalSection)
         selectedSection = generalSection
     }
