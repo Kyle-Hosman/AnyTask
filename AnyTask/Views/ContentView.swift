@@ -174,6 +174,7 @@ struct ContentView: View {
         List {
             ForEach(sortedItems) { item in
                 HStack {
+                    // Main tappable area (except checkbox)
                     VStack(alignment: .leading, spacing: 4.0) {
                         TextField("Task Name", text: Binding(
                             get: { item.taskText },
@@ -184,8 +185,11 @@ struct ContentView: View {
                         ))
                         .focused($focusedItemID, equals: item.id)
                         .onTapGesture {
-                            focusedItemID = item.id
+                            if editModeState == .active {
+                                focusedItemID = item.id
+                            }
                         }
+                        .disabled(editModeState != .active) // Only editable in edit mode
 
                         if let dueDate = item.dueDate {
                             Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
@@ -198,6 +202,12 @@ struct ContentView: View {
                         }
                     }
                     .padding(.leading, 10)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if editModeState != .active {
+                            editingItem = item
+                        }
+                    }
 
                     Spacer()
 
