@@ -24,6 +24,8 @@ struct ContentView: View {
     @State private var isShowingDeleteConfirmation: Bool = false
     @State private var editModeState: EditMode = .inactive
     @State private var editingItem: Item? = nil
+    @State private var pendingSection: TaskSection? = nil
+    @State private var pendingSectionAssignments: [UUID: TaskSection] = [:]
 
     var sections: [TaskSection] {
         sectionsQuery.sorted { $0.order < $1.order }
@@ -50,6 +52,17 @@ struct ContentView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(editModeState == .active ? "Done" : "Edit") {
+                        if editModeState == .active {
+                            withAnimation(.easeInOut) {
+                                for (itemID, newSection) in pendingSectionAssignments {
+                                    if let item = itemsQuery.first(where: { $0.id == itemID }) {
+                                        item.parentSection = newSection
+                                    }
+                                }
+                                try? modelContext.save()
+                                pendingSectionAssignments.removeAll()
+                            }
+                        }
                         withAnimation {
                             editModeState = (editModeState == .active) ? .inactive : .active
                         }
@@ -111,25 +124,40 @@ struct ContentView: View {
         }
     }
 
-    // MARK: - Extracted Subviews
+    // MARK: - Section Selector
     private var sectionSelector: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack {
                 ForEach(sections) { section in
                     Button(action: {
-                        selectSection(section)
+                        if editModeState == .active && selectedSection?.name == "General" {
+                            if section.id != selectedSection?.id {
+                                pendingSection = section
+                            }
+                        } else {
+                            selectSection(section)
+                            pendingSection = nil
+                        }
                     }) {
                         Text(section.name)
                             .padding(10)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                    .fill(
+                                        (editModeState == .active && selectedSection?.name == "General" && section.id == pendingSection?.id)
+                                        ? Color.fromName(section.colorName)
+                                        : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                    )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 8)
                                             .stroke(Color.fromName(section.colorName), lineWidth: 2)
                                     )
                             )
                             .foregroundColor(.black)
+                            .opacity(
+                                (editModeState == .active && selectedSection?.name == "General" && section.id != selectedSection?.id)
+                                ? 0.7 : 1.0
+                            )
                     }
                     .contextMenu {
                         if section.isEditable {
@@ -151,7 +179,8 @@ struct ContentView: View {
         }
         .padding(.top)
     }
-
+    
+    // MARK: - TextField
     private var inputSection: some View {
         HStack {
             TextField("Enter task", text: $newTaskText)
@@ -160,6 +189,7 @@ struct ContentView: View {
                 .cornerRadius(16)
                 .font(.system(size: 18))
                 .focused($isInputFieldFocused)
+                
                 .tint(Color.fromName(selectedSection?.colorName ?? ".gray"))
                 .onSubmit {
                     addItem()
@@ -169,12 +199,12 @@ struct ContentView: View {
         .padding(.horizontal)
         .padding(.vertical)
     }
-
+    
+    // MARK: - Task List
     private var taskList: some View {
         List {
             ForEach(sortedItems) { item in
                 HStack {
-                    // Main tappable area (except checkbox)
                     VStack(alignment: .leading, spacing: 4.0) {
                         TextField("Task Name", text: Binding(
                             get: { item.taskText },
@@ -184,12 +214,12 @@ struct ContentView: View {
                             }
                         ))
                         .focused($focusedItemID, equals: item.id)
+                        .disabled(editModeState == .active)
                         .onTapGesture {
-                            if editModeState == .active {
+                            if editModeState != .active {
                                 focusedItemID = item.id
                             }
                         }
-                        .disabled(editModeState != .active) // Only editable in edit mode
 
                         if let dueDate = item.dueDate {
                             Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
@@ -202,12 +232,6 @@ struct ContentView: View {
                         }
                     }
                     .padding(.leading, 10)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        if editModeState != .active {
-                            editingItem = item
-                        }
-                    }
 
                     Spacer()
 
@@ -241,11 +265,31 @@ struct ContentView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                .background(Color.fromName(selectedSection?.colorName ?? ".gray"))
+                .background(
+                    Color.fromName(
+                        (editModeState == .active &&
+                         selectedSection?.name == "General" &&
+                         pendingSectionAssignments[item.id] != nil)
+                        ? pendingSectionAssignments[item.id]?.colorName ?? ".gray"
+                        : selectedSection?.colorName ?? ".gray"
+                    )
+                )
                 .cornerRadius(8)
                 .listRowBackground(Color.clear)
                 .listRowSeparator(.hidden)
                 .listRowInsets(EdgeInsets())
+                .contentShape(Rectangle()) // Make the whole row tappable
+                .onTapGesture {
+                    if editModeState == .active,
+                       selectedSection?.name == "General",
+                       let newSection = pendingSection,
+                       item.parentSection?.name == "General" {
+                        pendingSectionAssignments[item.id] = newSection
+                        //pendingSection = nil
+                    } else if editModeState != .active {
+                        editingItem = item
+                    }
+                }
             }
             .onMove(perform: moveItems)
             .onDelete(perform: deleteItems)
