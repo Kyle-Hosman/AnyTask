@@ -23,6 +23,7 @@ struct ContentView: View {
     @State private var sectionToDelete: TaskSection?
     @State private var isShowingDeleteConfirmation: Bool = false
     @State private var editModeState: EditMode = .inactive
+    @State private var editingItem: Item? = nil
 
     var sections: [TaskSection] {
         sectionsQuery.sorted { $0.order < $1.order }
@@ -69,6 +70,19 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.large)
         }
         .environment(\.editMode, $editModeState)
+        .sheet(isPresented: Binding<Bool>(
+            get: { editingItem != nil },
+            set: { if !$0 { editingItem = nil } }
+        )) {
+            if let item = editingItem {
+                ItemEditSheet(
+                    item: item,
+                    sections: sections,
+                    onSave: { _ in editingItem = nil },
+                    onCancel: { editingItem = nil }
+                )
+            }
+        }
         .sheet(isPresented: $isShowingNewSectionSheet) {
             NewSectionView { sectionName, colorName in
                 addSection(name: sectionName, colorName: colorName)
@@ -173,9 +187,15 @@ struct ContentView: View {
                             focusedItemID = item.id
                         }
 
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .shortened))
-                            .font(.footnote)
-                            .foregroundColor(.black)
+                        if let dueDate = item.dueDate {
+                            Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
+                                .font(.footnote)
+                                .foregroundColor(.black)
+                        } else {
+                            Text("")
+                                .font(.footnote)
+                                .foregroundColor(.black)
+                        }
                     }
                     .padding(.leading, 10)
 
@@ -199,15 +219,11 @@ struct ContentView: View {
                         .padding(.trailing, 10)
                     } else {
                         Button(action: {
-                           // ItemEditSheet(item)
+                            editingItem = item
                         }) {
                             ZStack {
-                                //RoundedRectangle(cornerRadius: 4)
-                                //    .stroke(Color.black, lineWidth: 2)
-                                //    .frame(width: 28, height: 28)
-                                    Image(systemName: "pencil")
-                                        .foregroundColor(.black)
-                                
+                                Image(systemName: "pencil")
+                                    .foregroundColor(.black)
                             }
                         }
                         .font(.title2)

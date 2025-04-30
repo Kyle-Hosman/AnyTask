@@ -28,14 +28,33 @@ struct ItemEditSheet: View {
                     TextField("Task Name", text: $editedText)
                 }
                 Section(header: Text("Section")) {
-                    Picker("Section", selection: $selectedSection) {
-                        ForEach(sections) { section in
-                            Text(section.name).tag(section)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack {
+                            ForEach(sections) { section in
+                                Button(action: {
+                                    selectedSection = section
+                                }) {
+                                    Text(section.name)
+                                        .padding(10)
+                                        .background(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(selectedSection.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 8)
+                                                        .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                                )
+                                        )
+                                        .foregroundColor(.black)
+                                }
+                                .disabled(!section.isEditable && section != selectedSection)
+                            }
                         }
+                        .padding(.horizontal)
                     }
+                    .padding(.top)
                 }
                 Section(header: Text("Due Date")) {
-                    DatePicker("Due Date", selection: $dueDate, displayedComponents: .date)
+                    DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
                 }
             }
             .navigationTitle("Edit Task")
