@@ -7,6 +7,7 @@
 
 import SwiftUI
 import SwiftData
+import UserNotifications
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -70,6 +71,7 @@ struct ContentView: View {
                 }
             }
             .onAppear {
+                requestNotificationPermission()
                 if sectionsQuery.isEmpty {
                     initializeDefaultSection()
                 } else {
@@ -78,6 +80,7 @@ struct ContentView: View {
                 if selectedSection == nil {
                     selectedSection = sectionsQuery.first
                 }
+                
             }
             .navigationTitle("AnyTask")
             .navigationBarTitleDisplayMode(.large)
@@ -129,10 +132,9 @@ struct ContentView: View {
 
     private var sectionSelector: some View {
         VStack(spacing: 0) {
-            // Find the "Any" section (was "General")
-            if let anySection = sections.first(where: { $0.name == "General" }) {
+            if let anySection = sections.first(where: { $0.name == "Any" }) {
                 Button(action: {
-                    if editModeState == .active && selectedSection?.name == "General" {
+                    if editModeState == .active && selectedSection?.name == "Any" {
                         // Do nothing or reset pendingSection if needed
                     } else {
                         selectSection(anySection)
@@ -157,12 +159,12 @@ struct ContentView: View {
                 .padding(.bottom, 6)
             }
 
-            // Show all other sections except "General"/"Any"
+            // Show all other sections except "Any"
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
-                    ForEach(sections.filter { $0.name != "General" }) { section in
+                    ForEach(sections.filter { $0.name != "Any" }) { section in
                         Button(action: {
-                            if editModeState == .active && selectedSection?.name == "General" {
+                            if editModeState == .active && selectedSection?.name == "Any" {
                                 if section.id != selectedSection?.id {
                                     pendingSection = section
                                 }
@@ -176,7 +178,7 @@ struct ContentView: View {
                                 .background(
                                     RoundedRectangle(cornerRadius: 8)
                                         .fill(
-                                            (editModeState == .active && selectedSection?.name == "General" && section.id == pendingSection?.id)
+                                            (editModeState == .active && selectedSection?.name == "Any" && section.id == pendingSection?.id)
                                             ? Color.fromName(section.colorName)
                                             : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
                                         )
@@ -187,7 +189,7 @@ struct ContentView: View {
                                 )
                                 .foregroundColor(.black)
                                 .opacity(
-                                    (editModeState == .active && selectedSection?.name == "General" && section.id != selectedSection?.id)
+                                    (editModeState == .active && selectedSection?.name == "Any" && section.id != selectedSection?.id)
                                     ? 0.7 : 1.0
                                 )
                         }
@@ -239,8 +241,46 @@ struct ContentView: View {
     private var taskList: some View {
         List {
             ForEach(sortedItems) { item in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4.0) {
+                TaskRowView(
+                    item: item,
+                    editModeState: editModeState,
+                    selectedSection: selectedSection,
+                    pendingSection: pendingSection,
+                    pendingSectionAssignments: $pendingSectionAssignments,
+                    focusedItemID: $focusedItemID,
+                    editingItem: $editingItem,
+                    toggleTaskCompletion: toggleTaskCompletion,
+                    modelContext: modelContext,
+                    save: { try? modelContext.save() }
+                )
+            }
+            .onMove(perform: moveItems)
+            .onDelete(perform: deleteItems)
+        }
+        .listRowSpacing(10)
+        .environment(\.editMode, $editModeState)
+    }
+    
+    // MARK: - TaskRowView
+    struct TaskRowView: View {
+        let item: Item
+        let editModeState: EditMode
+        let selectedSection: TaskSection?
+        let pendingSection: TaskSection?
+        @Binding var pendingSectionAssignments: [UUID: TaskSection]
+        var focusedItemID: FocusState<UUID?>.Binding
+        @Binding var editingItem: Item?
+        let toggleTaskCompletion: (Item) -> Void
+        let modelContext: ModelContext
+        let save: () -> Void
+
+        var body: some View {
+            HStack {
+                VStack(alignment: .leading, spacing: 4.0) {
+                    if editModeState != .active {
+                        Text(item.taskText)
+                            .font(.body)
+                    } else {
                         TextField("Task Name", text: Binding(
                             get: { item.taskText },
                             set: { newValue in
@@ -248,89 +288,78 @@ struct ContentView: View {
                                 try? modelContext.save()
                             }
                         ))
-                        .focused($focusedItemID, equals: item.id)
+                        .focused(focusedItemID, equals: item.id)
                         .disabled(editModeState == .active)
-                        .onTapGesture {
-                            if editModeState != .active {
-                                focusedItemID = item.id
-                            }
-                        }
-
-                        if let dueDate = item.dueDate {
-                            Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
-                                .font(.footnote)
-                                .foregroundColor(.black)
-                        } else {
-                            Text("")
-                                .font(.footnote)
-                                .foregroundColor(.black)
-                        }
                     }
-                    .padding(.leading, 10)
 
-                    Spacer()
+                    if let dueDate = item.dueDate {
+                        Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
+                            .font(.footnote)
+                            .foregroundColor(.black)
+                    }
+                }
+                .padding(.all, 10)
 
-                    if editModeState != .active {
-                        Button(action: {
-                            toggleTaskCompletion(item)
-                        }) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .frame(width: 28, height: 28)
-                                if item.taskComplete {
+                Spacer()
+
+                if editModeState != .active {
+                    Button(action: {
+                        toggleTaskCompletion(item)
+                    }) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.black, lineWidth: 2)
+                            .frame(width: 28, height: 28)
+                            .overlay(
+                                item.taskComplete ?
                                     Image(systemName: "checkmark")
                                         .foregroundColor(.black)
-                                }
-                            }
-                        }
-                        .font(.title2)
-                        .padding(.trailing, 10)
-                    } else {
-                        Button(action: {
-                            editingItem = item
-                        }) {
-                            ZStack {
-                                Image(systemName: "pencil")
-                                    .foregroundColor(.black)
-                            }
-                        }
-                        .font(.title2)
-                        .padding(.trailing, 10)
+                                    : nil
+                            )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
-                }
-                .padding(.vertical, 8)
-                .background(
-                    Color.fromName(
-                        (editModeState == .active &&
-                         selectedSection?.name == "General" &&
-                         pendingSectionAssignments[item.id] != nil)
-                        ? pendingSectionAssignments[item.id]?.colorName ?? ".gray"
-                        : selectedSection?.colorName ?? ".gray"
-                    )
-                )
-                .cornerRadius(8)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-                .listRowInsets(EdgeInsets())
-                .contentShape(Rectangle()) // Make the whole row tappable
-                .onTapGesture {
-                    if editModeState == .active,
-                       selectedSection?.name == "General",
-                       let newSection = pendingSection,
-                       item.parentSection?.name == "General" {
-                        pendingSectionAssignments[item.id] = newSection
-                        //pendingSection = nil
-                    } else if editModeState != .active {
+                    .buttonStyle(PlainButtonStyle())
+                    .frame(width: 44, height: 44) // Larger tappable area
+                    .padding(.trailing, 10)
+                    
+                } else {
+                    Button(action: {
                         editingItem = item
+                    }) {
+                        ZStack {
+                            Image(systemName: "pencil")
+                                .foregroundColor(.black)
+                        }
                     }
+                    .font(.title2)
+                    .padding(.trailing, 10)
                 }
             }
-            .onMove(perform: moveItems)
-            .onDelete(perform: deleteItems)
+            .padding(.vertical, 8)
+            .background(
+                Color.fromName(
+                    (editModeState == .active &&
+                     selectedSection?.name == "Any" &&
+                     pendingSectionAssignments[item.id] != nil)
+                    ? pendingSectionAssignments[item.id]?.colorName ?? ".gray"
+                    : selectedSection?.colorName ?? ".gray"
+                )
+            )
+            .cornerRadius(8)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets())
+            .contentShape(Rectangle())
+            .onTapGesture {
+                        if editModeState == .active,
+                           selectedSection?.name == "Any",
+                           let newSection = pendingSection,
+                           item.parentSection?.name == "Any" {
+                            pendingSectionAssignments[item.id] = newSection
+                        } else if editModeState != .active {
+                            editingItem = item
+                        }
+                    }
         }
-        .listRowSpacing(10)
-        .environment(\.editMode, $editModeState)
     }
 
     // MARK: - Functions
@@ -352,13 +381,18 @@ struct ContentView: View {
             )
             modelContext.insert(newItem)
             newTaskText = ""
+            if newItem.dueDate != nil {
+                scheduleNotification(for: newItem)
+            }
         }
     }
 
     private func deleteItems(at offsets: IndexSet) {
         let filteredItems = sortedItems
         for index in offsets {
-            modelContext.delete(filteredItems[index])
+            let item = filteredItems[index]
+            cancelNotification(for: item)
+            modelContext.delete(item)
         }
     }
 
@@ -424,6 +458,34 @@ struct ContentView: View {
             selectedSection = lastSection
         }
     }
+
+    // MARK: - Notification Helpers
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+            if let error = error {
+                print("Notification permission error: \(error)")
+            }
+        }
+    }
+
+    private func scheduleNotification(for item: Item) {
+        guard let dueDate = item.dueDate else { return }
+        let content = UNMutableNotificationContent()
+        content.title = "Task Due"
+        content.body = item.taskText
+        content.sound = .default
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(dueDate.timeIntervalSinceNow, 1), repeats: false)
+        let request = UNNotificationRequest(identifier: item.id.uuidString, content: content, trigger: trigger)
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Failed to schedule notification: \(error)")
+            }
+        }
+    }
+
+    private func cancelNotification(for item: Item) {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [item.id.uuidString])
+    }
 }
 
 // MARK: - Preview
@@ -451,7 +513,7 @@ struct PreviewContainer: View {
 private func insertPreviewData(into context: ModelContext) {
     let fetchRequest = FetchDescriptor<Item>()
     if (try? context.fetch(fetchRequest).isEmpty) == true {
-        let sampleSection = TaskSection(name: "General", colorName: ".gray", isEditable: false, order: 0)
+        let sampleSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0)
         context.insert(sampleSection)
         let sampleItems = [
             Item(taskText: "Buy Groceries", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection),

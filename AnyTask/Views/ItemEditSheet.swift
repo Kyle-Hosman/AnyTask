@@ -63,7 +63,11 @@ struct ItemEditSheet: View {
                 item.parentSection = selectedSection
                 item.dueDate = dueDate
                 onSave(item)
+                if item.dueDate != nil {
+                    NotificationManager.scheduleNotification(for: item)
+                }
             })
         }
     }
 }
+
