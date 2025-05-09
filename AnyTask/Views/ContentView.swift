@@ -46,6 +46,19 @@ struct ContentView: View {
                 inputSection
                 taskList
             }
+            .onAppear {
+                requestNotificationPermission()
+                if sectionsQuery.isEmpty {
+                    initializeDefaultSection()
+                } else {
+                    restoreLastSelectedSection()
+                }
+                if selectedSection == nil {
+                    selectedSection = sectionsQuery.first
+                }
+            }
+            .navigationTitle("AnyTask")
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("New Section") {
@@ -55,10 +68,8 @@ struct ContentView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(editModeState == .active ? "Done" : "Edit") {
                         if editModeState == .active {
-                            // Start animation
                             let idsToAnimate = Set(pendingSectionAssignments.keys)
                             animatingOutIDs = idsToAnimate
-                            // Wait for animation, then move items
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
                                 withAnimation(.easeInOut) {
                                     for (itemID, newSection) in pendingSectionAssignments {
@@ -78,60 +89,46 @@ struct ContentView: View {
                     }
                 }
             }
-            .onAppear {
-                requestNotificationPermission()
-                if sectionsQuery.isEmpty {
-                    initializeDefaultSection()
-                } else {
-                    restoreLastSelectedSection()
-                }
-                if selectedSection == nil {
-                    selectedSection = sectionsQuery.first
-                }
-                
-            }
-            .navigationTitle("AnyTask")
-            .navigationBarTitleDisplayMode(.large)
-        }
-        .environment(\.editMode, $editModeState)
-        .sheet(isPresented: Binding<Bool>(
-            get: { editingItem != nil },
-            set: { if !$0 { editingItem = nil } }
-        )) {
-            if let item = editingItem {
-                ItemEditSheet(
-                    item: item,
-                    sections: sections,
-                    onSave: { _ in editingItem = nil },
-                    onCancel: { editingItem = nil }
-                )
-            }
-        }
-        .sheet(isPresented: $isShowingNewSectionSheet) {
-            NewSectionView { sectionName, colorName in
-                addSection(name: sectionName, colorName: colorName)
-            }
-        }
-        .sheet(isPresented: $isShowingEditSectionSheet, onDismiss: {
-            sectionToEdit = nil
-        }) {
-            if let sectionToEdit = sectionToEdit {
-                NewSectionView(initialName: sectionToEdit.name, initialColor: sectionToEdit.colorName) { sectionName, colorName in
-                    editSection(sectionToEdit, newName: sectionName, newColor: colorName)
+            .environment(\.editMode, $editModeState)
+            .sheet(isPresented: Binding<Bool>(
+                get: { editingItem != nil },
+                set: { if !$0 { editingItem = nil } }
+            )) {
+                if let item = editingItem {
+                    ItemEditSheet(
+                        item: item,
+                        sections: sections,
+                        onSave: { _ in editingItem = nil },
+                        onCancel: { editingItem = nil }
+                    )
                 }
             }
-        }
-        .confirmationDialog(
-            "Are you sure you want to delete this section?",
-            isPresented: $isShowingDeleteConfirmation,
-            titleVisibility: .visible
-        ) {
-            if let section = sectionToDelete {
-                Button("Delete", role: .destructive) {
-                    deleteSection(section)
+            .sheet(isPresented: $isShowingNewSectionSheet) {
+                NewSectionView { sectionName, colorName, iconName in
+                    addSection(name: sectionName, colorName: colorName, iconName: iconName)
                 }
             }
-            Button("Cancel", role: .cancel) {}
+            .sheet(isPresented: $isShowingEditSectionSheet, onDismiss: {
+                sectionToEdit = nil
+            }) {
+                if let sectionToEdit = sectionToEdit {
+                    NewSectionView(initialName: sectionToEdit.name, initialColor: sectionToEdit.colorName, initialIconName: sectionToEdit.iconName) { sectionName, colorName, iconName in
+                        editSection(sectionToEdit, newName: sectionName, newColor: colorName, iconName: iconName)
+                    }
+                }
+            }
+            .confirmationDialog(
+                "Are you sure you want to delete this section?",
+                isPresented: $isShowingDeleteConfirmation,
+                titleVisibility: .visible
+            ) {
+                if let section = sectionToDelete {
+                    Button("Delete", role: .destructive) {
+                        deleteSection(section)
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
         }
     }
 
@@ -151,6 +148,7 @@ struct ContentView: View {
                 }) {
                     Text("Any")
                         .frame(maxWidth: .infinity)
+                        .frame(maxWidth: .infinity)
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 12)
@@ -167,7 +165,6 @@ struct ContentView: View {
                 .padding(.bottom, 6)
             }
 
-            // Show all other sections except "Any"
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack {
                     ForEach(sections.filter { $0.name != "Any" }) { section in
@@ -181,25 +178,30 @@ struct ContentView: View {
                                 pendingSection = nil
                             }
                         }) {
-                            Text(section.name)
-                                .padding(10)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(
-                                            (editModeState == .active && selectedSection?.name == "Any" && section.id == pendingSection?.id)
-                                            ? Color.fromName(section.colorName)
-                                            : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
-                                        )
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .stroke(Color.fromName(section.colorName), lineWidth: 2)
-                                        )
-                                )
-                                .foregroundColor(.black)
-                                .opacity(
-                                    (editModeState == .active && selectedSection?.name == "Any" && section.id != selectedSection?.id)
-                                    ? 0.7 : 1.0
-                                )
+                            HStack(spacing: 6) {
+                                Image(systemName: section.iconName)
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                Text(section.name)
+                            }
+                            .padding(10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(
+                                        (editModeState == .active && selectedSection?.name == "Any" && section.id == pendingSection?.id)
+                                        ? Color.fromName(section.colorName)
+                                        : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                    )
+                            )
+                            .foregroundColor(.black)
+                            .opacity(
+                                (editModeState == .active && selectedSection?.name == "Any" && section.id != selectedSection?.id)
+                                ? 0.7 : 1.0
+                            )
                         }
                         .contextMenu {
                             if section.isEditable {
@@ -428,19 +430,20 @@ struct ContentView: View {
         try? modelContext.save()
     }
 
-    private func addSection(name: String, colorName: String) {
+    private func addSection(name: String, colorName: String, iconName: String) {
         withAnimation {
             let maxOrder = sectionsQuery.map { $0.order }.max() ?? 0
-            let newSection = TaskSection(name: name, colorName: colorName, order: maxOrder + 1)
+            let newSection = TaskSection(name: name, colorName: colorName, order: maxOrder + 1, iconName: iconName)
             modelContext.insert(newSection)
             selectedSection = newSection
         }
     }
 
-    private func editSection(_ section: TaskSection, newName: String, newColor: String) {
+    private func editSection(_ section: TaskSection, newName: String, newColor: String, iconName: String) {
         if let existingSection = sectionsQuery.first(where: { $0.id == section.id }) {
             existingSection.name = newName
             existingSection.colorName = newColor
+            existingSection.iconName = iconName
             try? modelContext.save()
         }
     }
@@ -457,7 +460,7 @@ struct ContentView: View {
     }
 
     private func initializeDefaultSection() {
-        let generalSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0)
+        let generalSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0, iconName: "questionmark")
         modelContext.insert(generalSection)
         selectedSection = generalSection
     }
@@ -527,7 +530,7 @@ struct PreviewContainer: View {
 private func insertPreviewData(into context: ModelContext) {
     let fetchRequest = FetchDescriptor<Item>()
     if (try? context.fetch(fetchRequest).isEmpty) == true {
-        let sampleSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0)
+        let sampleSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0, iconName: "questionmark")
         context.insert(sampleSection)
         let sampleItems = [
             Item(taskText: "Buy Groceries", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection),
@@ -536,7 +539,7 @@ private func insertPreviewData(into context: ModelContext) {
         ]
         sampleItems.forEach { context.insert($0) }
         
-        let sampleSection2 = TaskSection(name: "To-Do", colorName: ".green", isEditable: true, order: 1)
+        let sampleSection2 = TaskSection(name: "To-Do", colorName: ".green", isEditable: true, order: 1, iconName: "pencil")
         context.insert(sampleSection2)
         let sampleItems2 = [
             Item(taskText: "Work Out", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection2),
@@ -545,7 +548,7 @@ private func insertPreviewData(into context: ModelContext) {
         ]
         sampleItems2.forEach { context.insert($0) }
         
-        let sampleSection3 = TaskSection(name: "Reminders", colorName: ".red", isEditable: true, order: 2)
+        let sampleSection3 = TaskSection(name: "Reminders", colorName: ".red", isEditable: true, order: 2, iconName: "flag")
         context.insert(sampleSection3)
         let sampleItems3 = [
             Item(taskText: "Develop app", taskComplete: true, timestamp: Date(), order: 0, parentSection: sampleSection3),
@@ -554,7 +557,7 @@ private func insertPreviewData(into context: ModelContext) {
         ]
         sampleItems3.forEach { context.insert($0) }
         
-        let sampleSection4 = TaskSection(name: "Shopping", colorName: ".blue", isEditable: true, order: 3)
+        let sampleSection4 = TaskSection(name: "Shopping", colorName: ".blue", isEditable: true, order: 3, iconName: "cart")
         context.insert(sampleSection4)
         let sampleItems4 = [
             Item(taskText: "Eggs", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection4),

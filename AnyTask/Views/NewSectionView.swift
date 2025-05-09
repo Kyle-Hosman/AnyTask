@@ -1,18 +1,17 @@
-//
-//  NewSectionView.swift
-//  AnyTask
-//
-//  Created by Kyle Hosman on 1/10/25.
-//
-
 import SwiftUI
 
 struct NewSectionView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var sectionName: String
     @State private var selectedColor: String
-    @FocusState private var isTextFieldFocused: Bool // Track focus state
-    let onCreate: (String, String) -> Void
+    @State private var selectedIcon: String
+    @FocusState private var isTextFieldFocused: Bool
+
+    let availableIcons = [
+        "folder", "star", "list.bullet", "checkmark.seal", "cart", "book", "heart", "flag", "bell", "calendar", "bolt", "gift", "leaf", "pencil", "person", "questionmark"
+    ]
+
+    let onCreate: (String, String, String) -> Void
 
     let colors: [String: Color] = [
         ".blue": .blue,
@@ -22,25 +21,24 @@ struct NewSectionView: View {
         ".purple": .purple
     ]
 
-    init(initialName: String = "", initialColor: String = ".blue", onCreate: @escaping (String, String) -> Void) {
+    init(initialName: String = "", initialColor: String = ".blue", initialIconName: String = "folder", onCreate: @escaping (String, String, String) -> Void) {
         self._sectionName = State(initialValue: initialName)
         self._selectedColor = State(initialValue: initialColor)
+        self._selectedIcon = State(initialValue: initialIconName)
         self.onCreate = onCreate
     }
 
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
-                // Styled TextField for Section Name
                 TextField("Enter section name", text: $sectionName)
                     .padding()
-                    .background(Color(.systemGray6)) // Light gray background
-                    .cornerRadius(16) // Rounded corners
-                    .font(.system(size: 18)) // Slightly larger font
-                    .focused($isTextFieldFocused) // Automatically focus
+                    .background(Color(.systemGray6))
+                    .cornerRadius(16)
+                    .font(.system(size: 18))
+                    .focused($isTextFieldFocused)
                     .padding(.horizontal)
 
-                // Color Picker
                 Text("Pick a Color")
                     .font(.headline)
                     .padding(.top)
@@ -61,9 +59,13 @@ struct NewSectionView: View {
                 }
                 .padding()
 
-                // Save Button
+                Text("Pick an Icon")
+                    .font(.headline)
+                    .padding(.top)
+                iconPicker
+
                 Button("Done") {
-                    onCreate(sectionName, selectedColor)
+                    onCreate(sectionName, selectedColor, selectedIcon)
                     dismiss()
                 }
                 .disabled(sectionName.isEmpty)
@@ -77,8 +79,24 @@ struct NewSectionView: View {
                 dismiss()
             })
             .onAppear {
-                isTextFieldFocused = true // Automatically focus the text field
+                isTextFieldFocused = true
             }
         }
+    }
+    
+    private var iconPicker: some View {
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
+            ForEach(availableIcons, id: \.self) { icon in
+                Button(action: { selectedIcon = icon }) {
+                    Image(systemName: icon)
+                        .font(.title2)
+                        .padding()
+                        .background(selectedIcon == icon ? (colors[selectedColor] ?? .gray).opacity(1.0) : Color.clear)
+                        .clipShape(Circle())
+                        .foregroundColor(.black)
+                }
+            }
+        }
+        .padding(.vertical)
     }
 }
