@@ -11,6 +11,8 @@ import UserNotifications
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.colorScheme) var colorScheme
+
     @Query private var sectionsQuery: [TaskSection]
     @Query private var itemsQuery: [Item]
 
@@ -28,6 +30,7 @@ struct ContentView: View {
     @State private var pendingSection: TaskSection? = nil
     @State private var pendingSectionAssignments: [UUID: TaskSection] = [:]
     @State private var animatingOutIDs: Set<UUID> = []
+    
 
     var sections: [TaskSection] {
         sectionsQuery.sorted { $0.order < $1.order }
@@ -46,6 +49,11 @@ struct ContentView: View {
                 inputSection
                 taskList
             }
+            .background(
+                colorScheme == .dark
+                    ? Color(.secondarySystemBackground)
+                    : Color(.tertiarySystemBackground)
+            )
             .onAppear {
                 requestNotificationPermission()
                 if sectionsQuery.isEmpty {
@@ -158,7 +166,7 @@ struct ContentView: View {
                                         .stroke(Color.fromName(anySection.colorName), lineWidth: 2)
                                 )
                         )
-                        .foregroundColor(.black)
+                        .foregroundColor(Color.primary)
                         .font(.headline)
                 }
                 .padding(.horizontal)
@@ -181,7 +189,7 @@ struct ContentView: View {
                             HStack(spacing: 6) {
                                 Image(systemName: section.iconName)
                                     .font(.headline)
-                                    .foregroundColor(.black)
+                                    .foregroundColor(Color.primary)
                                 Text(section.name)
                             }
                             .padding(10)
@@ -197,7 +205,7 @@ struct ContentView: View {
                                             .stroke(Color.fromName(section.colorName), lineWidth: 2)
                                     )
                             )
-                            .foregroundColor(.black)
+                            .foregroundColor(Color.primary)
                             .opacity(
                                 (editModeState == .active && selectedSection?.name == "Any" && section.id != selectedSection?.id)
                                 ? 0.7 : 1.0
@@ -237,7 +245,7 @@ struct ContentView: View {
                 .font(.system(size: 18))
                 .focused($isInputFieldFocused)
                 
-                .tint(Color.fromName(selectedSection?.colorName ?? ".gray"))
+                .tint(.black)
                 .onSubmit {
                     addItem()
                     isInputFieldFocused = true
@@ -270,6 +278,13 @@ struct ContentView: View {
         }
         .listRowSpacing(10)
         .environment(\.editMode, $editModeState)
+        .scrollDismissesKeyboard(.immediately)
+        .background(
+            colorScheme == .dark
+                ? Color(.tertiarySystemBackground)
+                : Color(.secondarySystemBackground)
+        )
+        .scrollContentBackground(.hidden)
     }
     
     // MARK: - TaskRowView
@@ -307,7 +322,7 @@ struct ContentView: View {
                     if let dueDate = item.dueDate {
                         Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
                             .font(.footnote)
-                            .foregroundColor(.black)
+                            .foregroundColor(Color.secondary)
                     }
                 }
                 .padding(.all, 10)
@@ -324,7 +339,7 @@ struct ContentView: View {
                             .overlay(
                                 item.taskComplete ?
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(.black)
+                                    .foregroundColor(Color.primary)
                                     : nil
                             )
                             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -339,7 +354,7 @@ struct ContentView: View {
                     }) {
                         ZStack {
                             Image(systemName: "pencil")
-                                .foregroundColor(.black)
+                                .foregroundColor(Color.primary)
                         }
                     }
                     .font(.title2)

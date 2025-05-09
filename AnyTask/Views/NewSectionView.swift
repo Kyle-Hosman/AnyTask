@@ -30,6 +30,7 @@ struct NewSectionView: View {
 
     var body: some View {
         NavigationView {
+            ScrollView {
             VStack(spacing: 20) {
                 TextField("Enter section name", text: $sectionName)
                     .padding()
@@ -38,11 +39,11 @@ struct NewSectionView: View {
                     .font(.system(size: 18))
                     .focused($isTextFieldFocused)
                     .padding(.horizontal)
-
+                
                 Text("Pick a Color")
                     .font(.headline)
                     .padding(.top)
-
+                
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 20) {
                     ForEach(colors.keys.sorted(), id: \.self) { colorName in
                         Circle()
@@ -50,7 +51,7 @@ struct NewSectionView: View {
                             .frame(width: 50, height: 50)
                             .overlay(
                                 Circle()
-                                    .stroke(selectedColor == colorName ? Color.black : Color.clear, lineWidth: 2)
+                                    .stroke(selectedColor == colorName ? Color.primary : Color.clear, lineWidth: 2)
                             )
                             .onTapGesture {
                                 selectedColor = colorName
@@ -58,12 +59,12 @@ struct NewSectionView: View {
                     }
                 }
                 .padding()
-
+                
                 Text("Pick an Icon")
                     .font(.headline)
                     .padding(.top)
                 iconPicker
-
+                
                 Button("Done") {
                     onCreate(sectionName, selectedColor, selectedIcon)
                     dismiss()
@@ -71,9 +72,12 @@ struct NewSectionView: View {
                 .disabled(sectionName.isEmpty)
                 .buttonStyle(.borderedProminent)
                 .padding()
-
+                
                 Spacer()
             }
+        }
+            .scrollDismissesKeyboard(.immediately)
+            .ignoresSafeArea(.keyboard)
             .navigationTitle("New Section")
             .navigationBarItems(leading: Button("Cancel") {
                 dismiss()
@@ -93,7 +97,7 @@ struct NewSectionView: View {
                         .padding()
                         .background(selectedIcon == icon ? (colors[selectedColor] ?? .gray).opacity(1.0) : Color.clear)
                         .clipShape(Circle())
-                        .foregroundColor(.black)
+                        .foregroundColor(Color.primary)
                 }
             }
         }

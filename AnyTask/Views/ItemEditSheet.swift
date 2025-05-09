@@ -44,7 +44,7 @@ struct ItemEditSheet: View {
                                                         .stroke(Color.fromName(section.colorName), lineWidth: 2)
                                                 )
                                         )
-                                        .foregroundColor(.black)
+                                        .foregroundColor(Color.primary)
                                 }
                                 .disabled(!section.isEditable && section != selectedSection)
                             }
