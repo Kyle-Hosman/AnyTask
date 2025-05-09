@@ -27,6 +27,7 @@ struct ContentView: View {
     @State private var editingItem: Item? = nil
     @State private var pendingSection: TaskSection? = nil
     @State private var pendingSectionAssignments: [UUID: TaskSection] = [:]
+    @State private var animatingOutIDs: Set<UUID> = []
 
     var sections: [TaskSection] {
         sectionsQuery.sorted { $0.order < $1.order }
@@ -54,14 +55,21 @@ struct ContentView: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(editModeState == .active ? "Done" : "Edit") {
                         if editModeState == .active {
-                            withAnimation(.easeInOut) {
-                                for (itemID, newSection) in pendingSectionAssignments {
-                                    if let item = itemsQuery.first(where: { $0.id == itemID }) {
-                                        item.parentSection = newSection
+                            // Start animation
+                            let idsToAnimate = Set(pendingSectionAssignments.keys)
+                            animatingOutIDs = idsToAnimate
+                            // Wait for animation, then move items
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                                withAnimation(.easeInOut) {
+                                    for (itemID, newSection) in pendingSectionAssignments {
+                                        if let item = itemsQuery.first(where: { $0.id == itemID }) {
+                                            item.parentSection = newSection
+                                        }
                                     }
+                                    try? modelContext.save()
+                                    pendingSectionAssignments.removeAll()
+                                    animatingOutIDs.removeAll()
                                 }
-                                try? modelContext.save()
-                                pendingSectionAssignments.removeAll()
                             }
                         }
                         withAnimation {
@@ -251,7 +259,8 @@ struct ContentView: View {
                     editingItem: $editingItem,
                     toggleTaskCompletion: toggleTaskCompletion,
                     modelContext: modelContext,
-                    save: { try? modelContext.save() }
+                    save: { try? modelContext.save() },
+                    isAnimatingOut: animatingOutIDs.contains(item.id)
                 )
             }
             .onMove(perform: moveItems)
@@ -273,6 +282,7 @@ struct ContentView: View {
         let toggleTaskCompletion: (Item) -> Void
         let modelContext: ModelContext
         let save: () -> Void
+        let isAnimatingOut: Bool
 
         var body: some View {
             HStack {
@@ -359,6 +369,10 @@ struct ContentView: View {
                             editingItem = item
                         }
                     }
+            .scaleEffect(isAnimatingOut ? 0.1 : 1.0)
+            .opacity(isAnimatingOut ? 0.0 : 1.0)
+            .offset(x: isAnimatingOut ? 100 : 0, y: isAnimatingOut ? -40 : 0)
+            .animation(.easeInOut(duration: 0.4), value: isAnimatingOut)
         }
     }
 
