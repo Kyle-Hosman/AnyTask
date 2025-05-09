@@ -13,8 +13,8 @@ struct NotificationManager {
     static func scheduleNotification(for item: Item) {
         guard let dueDate = item.dueDate else { return }
         let content = UNMutableNotificationContent()
-        content.title = "AnyTask"
-        content.body = (item.taskText + " @ " + item.dueDate!.formatted(date: .omitted, time: .shortened))
+        content.title = item.taskText
+        content.body = ("Due @ " + item.dueDate!.formatted(date: .omitted, time: .shortened))
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(dueDate.timeIntervalSinceNow, 1), repeats: false)
         let request = UNNotificationRequest(identifier: item.id.uuidString, content: content, trigger: trigger)
