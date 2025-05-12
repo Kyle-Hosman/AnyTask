@@ -302,11 +302,14 @@ struct ContentView: View {
         let isAnimatingOut: Bool
 
         var body: some View {
-            HStack {
-                VStack(alignment: .leading, spacing: 4.0) {
+            HStack(alignment: .center, spacing: 10) {
+                VStack(alignment: .leading, spacing: 4) {
                     if editModeState != .active {
                         Text(item.taskText)
                             .font(.body)
+                            .lineLimit(3)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .layoutPriority(1)
                     } else {
                         TextField("Task Name", text: Binding(
                             get: { item.taskText },
@@ -325,46 +328,47 @@ struct ContentView: View {
                             .foregroundColor(Color.secondary)
                     }
                 }
-                .padding(.all, 10)
-
-                Spacer()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
 
                 if editModeState != .active {
-                    HStack {
-                            Spacer()
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.black, lineWidth: 2)
-                                .frame(width: 32, height: 32)
-                                .overlay(
-                                    item.taskComplete ?
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(Color.primary)
-                                        : nil
-                                )
-                                .padding(16)
-                                .contentShape(Rectangle()) // make whole area tappable
-                        }
-                        .onTapGesture {
+                    //GeometryReader { geometry in
+                        Button(action: {
                             let generator = UIImpactFeedbackGenerator(style: .medium)
                             generator.impactOccurred()
                             toggleTaskCompletion(item)
+                        }) {
+                            ZStack {
+                                //Color.yellow.opacity(0.3) // Debug background
+
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.black, lineWidth: 2)
+                                    .frame(width: 28, height: 28)
+                                    .overlay(
+                                        item.taskComplete ?
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(Color.primary)
+                                            : nil
+                                    )
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                         }
-                    
-                    
+                        .buttonStyle(PlainButtonStyle())
+                        .frame(width: 44, height: .infinity)
+
+                   // }
+                        
                 } else {
                     Button(action: {
                         editingItem = item
                     }) {
-                        ZStack {
-                            Image(systemName: "pencil")
-                                .foregroundColor(Color.primary)
-                        }
+                        Image(systemName: "pencil")
+                            .foregroundColor(Color.primary)
                     }
                     .font(.title2)
-                    .padding(.trailing, 10)
                 }
             }
-            .padding(.vertical, 0)
+            .padding(10) // This gives internal space for both text & checkbox
             .background(
                 Color.fromName(
                     (editModeState == .active &&
@@ -380,20 +384,21 @@ struct ContentView: View {
             .listRowInsets(EdgeInsets())
             .contentShape(Rectangle())
             .onTapGesture {
-                        if editModeState == .active,
-                           selectedSection?.name == "Any",
-                           let newSection = pendingSection,
-                           item.parentSection?.name == "Any" {
-                            pendingSectionAssignments[item.id] = newSection
-                        } else if editModeState != .active {
-                            editingItem = item
-                        }
-                    }
+                if editModeState == .active,
+                   selectedSection?.name == "Any",
+                   let newSection = pendingSection,
+                   item.parentSection?.name == "Any" {
+                    pendingSectionAssignments[item.id] = newSection
+                } else if editModeState != .active {
+                    editingItem = item
+                }
+            }
             .scaleEffect(isAnimatingOut ? 0.1 : 1.0)
             .opacity(isAnimatingOut ? 0.0 : 1.0)
             .offset(x: isAnimatingOut ? 100 : 0, y: isAnimatingOut ? -40 : 0)
             .animation(.easeInOut(duration: 0.4), value: isAnimatingOut)
         }
+
     }
 
     // MARK: - Functions
@@ -551,7 +556,7 @@ private func insertPreviewData(into context: ModelContext) {
         let sampleSection = TaskSection(name: "Any", colorName: ".gray", isEditable: false, order: 0, iconName: "questionmark")
         context.insert(sampleSection)
         let sampleItems = [
-            Item(taskText: "Buy Groceries", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection),
+            Item(taskText: "Buy Groceries Buy Groceries Buy Groceries Buy Groceries Buy Groceries Buy Groceries Buy Groceries Buy Groceries Buy Groceries Buy Groceries", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection),
             Item(taskText: "Finish Project", taskComplete: false, timestamp: Date().addingTimeInterval(-3600), order: 1, parentSection: sampleSection),
             Item(taskText: "Pet Jerm", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 2, parentSection: sampleSection)
         ]
@@ -560,7 +565,7 @@ private func insertPreviewData(into context: ModelContext) {
         let sampleSection2 = TaskSection(name: "To-Do", colorName: ".green", isEditable: true, order: 1, iconName: "pencil")
         context.insert(sampleSection2)
         let sampleItems2 = [
-            Item(taskText: "Work Out", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection2),
+            Item(taskText: "Work Out Work Out Work Out Work Out Work Out Work Out Work Out Work Out Work Out Work Out Work Out Work Out", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection2),
             Item(taskText: "Walk Jerm", taskComplete: false, timestamp: Date().addingTimeInterval(-3600), order: 1, parentSection: sampleSection2),
             Item(taskText: "Give Jerm breakfast", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 2, parentSection: sampleSection2)
         ]
