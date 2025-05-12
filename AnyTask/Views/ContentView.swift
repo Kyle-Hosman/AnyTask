@@ -330,23 +330,26 @@ struct ContentView: View {
                 Spacer()
 
                 if editModeState != .active {
-                    Button(action: {
-                        toggleTaskCompletion(item)
-                    }) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.black, lineWidth: 2)
-                            .frame(width: 28, height: 28)
-                            .overlay(
-                                item.taskComplete ?
-                                    Image(systemName: "checkmark")
-                                    .foregroundColor(Color.primary)
-                                    : nil
-                            )
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    .frame(width: 44, height: 44) // Larger tappable area
-                    .padding(.trailing, 10)
+                    HStack {
+                            Spacer()
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.black, lineWidth: 2)
+                                .frame(width: 32, height: 32)
+                                .overlay(
+                                    item.taskComplete ?
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(Color.primary)
+                                        : nil
+                                )
+                                .padding(16)
+                                .contentShape(Rectangle()) // make whole area tappable
+                        }
+                        .onTapGesture {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            toggleTaskCompletion(item)
+                        }
+                    
                     
                 } else {
                     Button(action: {
@@ -361,7 +364,7 @@ struct ContentView: View {
                     .padding(.trailing, 10)
                 }
             }
-            .padding(.vertical, 8)
+            .padding(.vertical, 0)
             .background(
                 Color.fromName(
                     (editModeState == .active &&

@@ -31,7 +31,7 @@ struct NewSectionView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Section Name")) {
+                Section(header: Text("Name")) {
                     TextField("Enter section name", text: $sectionName)
                         .padding()
                         .background(Color(.systemGray6))
