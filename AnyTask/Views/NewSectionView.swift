@@ -30,62 +30,61 @@ struct NewSectionView: View {
 
     var body: some View {
         NavigationView {
-            ScrollView {
-            VStack(spacing: 20) {
-                TextField("Enter section name", text: $sectionName)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(16)
-                    .font(.system(size: 18))
-                    .focused($isTextFieldFocused)
-                    .padding(.horizontal)
-                
-                Text("Pick a Color")
-                    .font(.headline)
-                    .padding(.top)
-                
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 20) {
-                    ForEach(colors.keys.sorted(), id: \.self) { colorName in
-                        Circle()
-                            .fill(colors[colorName] ?? .gray)
-                            .frame(width: 50, height: 50)
-                            .overlay(
-                                Circle()
-                                    .stroke(selectedColor == colorName ? Color.primary : Color.clear, lineWidth: 2)
-                            )
-                            .onTapGesture {
-                                selectedColor = colorName
-                            }
-                    }
+            Form {
+                Section(header: Text("Section Name")) {
+                    TextField("Enter section name", text: $sectionName)
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(16)
+                        .font(.system(size: 18))
+                        .focused($isTextFieldFocused)
+                        .padding(.horizontal)
                 }
-                .padding()
-                
-                Text("Pick an Icon")
-                    .font(.headline)
-                    .padding(.top)
-                iconPicker
-                
-                Button("Done") {
+                Section(header: Text("Color")) {
+                        //Text("Pick a Color")
+                            //.font(.headline)
+                           // .padding(.top)
+                        
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 50))], spacing: 20) {
+                            ForEach(colors.keys.sorted(), id: \.self) { colorName in
+                                Circle()
+                                    .fill(colors[colorName] ?? .gray)
+                                    .frame(width: 50, height: 50)
+                                    .overlay(
+                                        Circle()
+                                            .stroke(selectedColor == colorName ? Color.primary : Color.clear, lineWidth: 2)
+                                    )
+                                    .onTapGesture {
+                                        selectedColor = colorName
+                                    }
+                            }
+                        }
+                        .padding()
+                }
+                Section(header: Text("Icon")) {
+//                    Text("Pick an Icon")
+//                        .font(.headline)
+//                        .padding(.top)
+                    iconPicker
+                }
+            }
+            .navigationTitle("New Section")
+            .navigationBarItems(
+                leading: Button("Cancel", action: { dismiss() }),
+                trailing: Button("Done") {
                     onCreate(sectionName, selectedColor, selectedIcon)
                     dismiss()
                 }
-                .disabled(sectionName.isEmpty)
-                .buttonStyle(.borderedProminent)
-                .padding()
-                
-                Spacer()
-            }
-        }
+                    .disabled(sectionName.isEmpty)
+            )
             .scrollDismissesKeyboard(.immediately)
             .ignoresSafeArea(.keyboard)
-            .navigationTitle("New Section")
-            .navigationBarItems(leading: Button("Cancel") {
-                dismiss()
-            })
             .onAppear {
                 isTextFieldFocused = true
             }
         }
+            
+        
     }
     
     private var iconPicker: some View {
