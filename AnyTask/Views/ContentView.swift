@@ -332,15 +332,13 @@ struct ContentView: View {
                 .layoutPriority(1)
 
                 if editModeState != .active {
-                    //GeometryReader { geometry in
-                        Button(action: {
-                            let generator = UIImpactFeedbackGenerator(style: .medium)
-                            generator.impactOccurred()
-                            toggleTaskCompletion(item)
-                        }) {
-                            ZStack {
-                                //Color.yellow.opacity(0.3) // Debug background
+                    GeometryReader { geometry in
+                        ZStack {
+                            //Color.yellow.opacity(0.3) // debug highlight
+                            Color.clear
 
+                            HStack {
+                                Spacer()
                                 RoundedRectangle(cornerRadius: 4)
                                     .stroke(Color.black, lineWidth: 2)
                                     .frame(width: 28, height: 28)
@@ -351,12 +349,17 @@ struct ContentView: View {
                                             : nil
                                     )
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
-                        .buttonStyle(PlainButtonStyle())
-                        .frame(width: 44, height: .infinity)
-
-                   // }
+                        .frame(width: geometry.size.width, height: geometry.size.height)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            let generator = UIImpactFeedbackGenerator(style: .medium)
+                            generator.impactOccurred()
+                            toggleTaskCompletion(item)
+                        }
+                    }
+                    .frame(width: 60) // controls overall size of checkbox zone
                         
                 } else {
                     Button(action: {
