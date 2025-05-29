@@ -1,7 +1,7 @@
 # AnyTask - iOS To-Do App
 An intuitive task manager designed to simplify your daily workflow.
 
-![AnyTask Demo](Images/App_Screenshot1.png)
+<img src="Images/App_Screenshot1.png" width="300" alt="AnyTask Demo">
 
 ## Features
 - User-friendly task organization.
