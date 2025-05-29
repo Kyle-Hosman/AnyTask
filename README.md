@@ -2,6 +2,8 @@
 An intuitive task manager designed to simplify your daily workflow.
 
 <img src="Images/App_Screenshot1.png" width="300" alt="AnyTask Demo">
+<img src="Images/App_Screenshot2.png" width="300" alt="AnyTask Demo">
+<img src="Images/App_Screenshot3.png" width="300" alt="AnyTask Demo">
 
 ## Features
 - User-friendly task organization.
