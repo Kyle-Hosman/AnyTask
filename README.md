@@ -14,5 +14,3 @@ An intuitive task manager designed to simplify your daily workflow.
 
 ## Technologies Used
 - Swift, SwiftUI, CoreData, Xcode
-
-## Screenshots
