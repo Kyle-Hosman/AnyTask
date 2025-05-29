@@ -11,6 +11,7 @@ An intuitive task manager designed to simplify your daily workflow.
 ## Features
 - User-friendly task organization.
 - Customizable UI and categories.
+- Due-date notifications
 
 ## Technologies Used
 - Swift, SwiftUI, CoreData, Xcode
