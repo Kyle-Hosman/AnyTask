@@ -13,6 +13,8 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
 
+    @Namespace private var taskMoveNamespace // For matchedGeometryEffect
+
     @Query private var sectionsQuery: [TaskSection]
     @Query private var itemsQuery: [Item]
 
@@ -276,60 +278,67 @@ struct ContentView: View {
     
     // MARK: - Task List
     private var taskList: some View {
-        List {
-            if !incompleteItems.isEmpty {
-                Section(header: Text("Tasks").font(.headline)) {
-                    ForEach(incompleteItems) { item in
-                        TaskRowView(
-                            item: item,
-                            editModeState: editModeState,
-                            selectedSection: selectedSection,
-                            pendingSection: pendingSection,
-                            pendingSectionAssignments: $pendingSectionAssignments,
-                            focusedItemID: $focusedItemID,
-                            editingItem: $editingItem,
-                            toggleTaskCompletion: toggleTaskCompletion,
-                            modelContext: modelContext,
-                            save: { try? modelContext.save() },
-                            isAnimatingOut: animatingOutIDs.contains(item.id),
-                            showMoveIcon: true
-                        )
+        ScrollView {
+            VStack(spacing: 24) {
+                if !incompleteItems.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Tasks").font(.headline).padding(.leading, 8)
+                        VStack(spacing: 10) {
+                            ForEach(incompleteItems) { item in
+                                TaskRowView(
+                                    item: item,
+                                    editModeState: editModeState,
+                                    selectedSection: selectedSection,
+                                    pendingSection: pendingSection,
+                                    pendingSectionAssignments: $pendingSectionAssignments,
+                                    focusedItemID: $focusedItemID,
+                                    editingItem: $editingItem,
+                                    toggleTaskCompletion: toggleTaskCompletion,
+                                    modelContext: modelContext,
+                                    save: { try? modelContext.save() },
+                                    isAnimatingOut: animatingOutIDs.contains(item.id),
+                                    showMoveIcon: true,
+                                    namespace: taskMoveNamespace
+                                )
+                                .matchedGeometryEffect(id: item.id, in: taskMoveNamespace)
+                            }
+                        }
                     }
-                    .onMove(perform: moveIncompleteItems)
-                    .onDelete(perform: deleteItems)
+                }
+                if !completeItems.isEmpty {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Completed").font(.headline).padding(.leading, 8)
+                        VStack(spacing: 10) {
+                            ForEach(completeItems) { item in
+                                TaskRowView(
+                                    item: item,
+                                    editModeState: editModeState,
+                                    selectedSection: selectedSection,
+                                    pendingSection: pendingSection,
+                                    pendingSectionAssignments: $pendingSectionAssignments,
+                                    focusedItemID: $focusedItemID,
+                                    editingItem: $editingItem,
+                                    toggleTaskCompletion: toggleTaskCompletion,
+                                    modelContext: modelContext,
+                                    save: { try? modelContext.save() },
+                                    isAnimatingOut: animatingOutIDs.contains(item.id),
+                                    showMoveIcon: false,
+                                    namespace: taskMoveNamespace
+                                )
+                                .matchedGeometryEffect(id: item.id, in: taskMoveNamespace)
+                            }
+                        }
+                    }
                 }
             }
-            if !completeItems.isEmpty {
-                Section(header: Text("Completed").font(.headline)) {
-                    ForEach(completeItems) { item in
-                        TaskRowView(
-                            item: item,
-                            editModeState: editModeState,
-                            selectedSection: selectedSection,
-                            pendingSection: pendingSection,
-                            pendingSectionAssignments: $pendingSectionAssignments,
-                            focusedItemID: $focusedItemID,
-                            editingItem: $editingItem,
-                            toggleTaskCompletion: toggleTaskCompletion,
-                            modelContext: modelContext,
-                            save: { try? modelContext.save() },
-                            isAnimatingOut: animatingOutIDs.contains(item.id),
-                            showMoveIcon: false
-                        )
-                    }
-                    .onDelete(perform: deleteItems)
-                }
-            }
+            .padding(.vertical)
+            .padding(.horizontal, 8)
         }
-        .listRowSpacing(10)
-        .environment(\.editMode, $editModeState)
-        .scrollDismissesKeyboard(.immediately)
         .background(
             colorScheme == .dark
                 ? Color(.tertiarySystemBackground)
                 : Color(.secondarySystemBackground)
         )
-        .scrollContentBackground(.hidden)
     }
     
     // MARK: - TaskRowView
@@ -346,6 +355,7 @@ struct ContentView: View {
         let save: () -> Void
         let isAnimatingOut: Bool
         let showMoveIcon: Bool
+        let namespace: Namespace.ID // Add namespace
 
         var body: some View {
             HStack(alignment: .center, spacing: 10) {
@@ -516,39 +526,41 @@ struct ContentView: View {
     }
 
     private func toggleTaskCompletion(_ item: Item) {
-        if item.taskComplete {
-            // Move from complete to incomplete, restore previous order
-            item.taskComplete = false
-            if let prevOrder = item.previousOrder {
-                // Shift all incomplete items with order >= prevOrder up by 1
-                let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
-                for other in incomplete where other.order >= prevOrder {
-                    other.order += 1
+        withAnimation(.easeInOut) {
+            if item.taskComplete {
+                // Move from complete to incomplete, restore previous order
+                item.taskComplete = false
+                if let prevOrder = item.previousOrder {
+                    // Shift all incomplete items with order >= prevOrder up by 1
+                    let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+                    for other in incomplete where other.order >= prevOrder {
+                        other.order += 1
+                    }
+                    item.order = prevOrder
+                } else {
+                    // If no previousOrder, put at top
+                    let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+                    for other in incomplete {
+                        other.order += 1
+                    }
+                    item.order = 0
                 }
-                item.order = prevOrder
+                item.completedAt = nil
+                item.previousOrder = nil
             } else {
-                // If no previousOrder, put at top
+                // Move from incomplete to complete, store previous order
+                item.previousOrder = item.order
+                item.taskComplete = true
+                item.completedAt = Date()
+                // Remove from incomplete order, shift others down
                 let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
-                for other in incomplete {
-                    other.order += 1
+                for other in incomplete where other.order > item.order {
+                    other.order -= 1
                 }
-                item.order = 0
+                item.order = 0 // order is not used for complete list
             }
-            item.completedAt = nil
-            item.previousOrder = nil
-        } else {
-            // Move from incomplete to complete, store previous order
-            item.previousOrder = item.order
-            item.taskComplete = true
-            item.completedAt = Date()
-            // Remove from incomplete order, shift others down
-            let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
-            for other in incomplete where other.order > item.order {
-                other.order -= 1
-            }
-            item.order = 0 // order is not used for complete list
+            try? modelContext.save()
         }
-        try? modelContext.save()
     }
 
     private func addSection(name: String, colorName: String, iconName: String) {
