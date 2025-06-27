@@ -19,8 +19,10 @@ final class Item: Identifiable {
     var order: Int
     var parentSection: TaskSection?
     var dueDate: Date?
+    var previousOrder: Int?
+    var completedAt: Date?
 
-    init(taskText: String, taskComplete: Bool, timestamp: Date, order: Int, parentSection: TaskSection?, dueDate: Date? = nil) {
+    init(taskText: String, taskComplete: Bool, timestamp: Date, order: Int, parentSection: TaskSection?, dueDate: Date? = nil, previousOrder: Int? = nil, completedAt: Date? = nil) {
         self.id = UUID()
         self.taskText = taskText
         self.taskComplete = taskComplete
@@ -28,6 +30,7 @@ final class Item: Identifiable {
         self.order = order
         self.parentSection = parentSection
         self.dueDate = dueDate
+        self.previousOrder = previousOrder
+        self.completedAt = completedAt
     }
 }
-

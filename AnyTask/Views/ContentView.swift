@@ -41,6 +41,12 @@ struct ContentView: View {
             .filter { $0.parentSection == selectedSection }
             .sorted { $0.order < $1.order }
     }
+    var incompleteItems: [Item] {
+        sortedItems.filter { !$0.taskComplete }.sorted { $0.order < $1.order }
+    }
+    var completeItems: [Item] {
+        sortedItems.filter { $0.taskComplete }.sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -90,6 +96,10 @@ struct ContentView: View {
                                     animatingOutIDs.removeAll()
                                 }
                             }
+                        }
+                        // Dismiss keyboard when entering edit mode
+                        if editModeState != .active {
+                            isInputFieldFocused = false
                         }
                         withAnimation {
                             editModeState = (editModeState == .active) ? .inactive : .active
@@ -182,6 +192,7 @@ struct ContentView: View {
                                     pendingSection = section
                                 }
                             } else {
+                                isInputFieldFocused = false
                                 selectSection(section)
                                 pendingSection = nil
                             }
@@ -244,8 +255,16 @@ struct ContentView: View {
                 .cornerRadius(16)
                 .font(.system(size: 18))
                 .focused($isInputFieldFocused)
-                
                 .tint(.black)
+                .highPriorityGesture(TapGesture().onEnded {
+                    if editModeState == .active {
+                        withAnimation {
+                            editModeState = .inactive
+                        }
+                    } else {
+                        isInputFieldFocused = true
+                    }
+                })
                 .onSubmit {
                     addItem()
                     isInputFieldFocused = true
@@ -258,23 +277,48 @@ struct ContentView: View {
     // MARK: - Task List
     private var taskList: some View {
         List {
-            ForEach(sortedItems) { item in
-                TaskRowView(
-                    item: item,
-                    editModeState: editModeState,
-                    selectedSection: selectedSection,
-                    pendingSection: pendingSection,
-                    pendingSectionAssignments: $pendingSectionAssignments,
-                    focusedItemID: $focusedItemID,
-                    editingItem: $editingItem,
-                    toggleTaskCompletion: toggleTaskCompletion,
-                    modelContext: modelContext,
-                    save: { try? modelContext.save() },
-                    isAnimatingOut: animatingOutIDs.contains(item.id)
-                )
+            if !incompleteItems.isEmpty {
+                Section(header: Text("Tasks").font(.headline)) {
+                    ForEach(incompleteItems) { item in
+                        TaskRowView(
+                            item: item,
+                            editModeState: editModeState,
+                            selectedSection: selectedSection,
+                            pendingSection: pendingSection,
+                            pendingSectionAssignments: $pendingSectionAssignments,
+                            focusedItemID: $focusedItemID,
+                            editingItem: $editingItem,
+                            toggleTaskCompletion: toggleTaskCompletion,
+                            modelContext: modelContext,
+                            save: { try? modelContext.save() },
+                            isAnimatingOut: animatingOutIDs.contains(item.id)
+                        )
+                    }
+                    .onMove(perform: moveItems)
+                    .onDelete(perform: deleteItems)
+                }
             }
-            .onMove(perform: moveItems)
-            .onDelete(perform: deleteItems)
+            if !completeItems.isEmpty {
+                Section(header: Text("Completed").font(.headline)) {
+                    ForEach(completeItems) { item in
+                        TaskRowView(
+                            item: item,
+                            editModeState: editModeState,
+                            selectedSection: selectedSection,
+                            pendingSection: pendingSection,
+                            pendingSectionAssignments: $pendingSectionAssignments,
+                            focusedItemID: $focusedItemID,
+                            editingItem: $editingItem,
+                            toggleTaskCompletion: toggleTaskCompletion,
+                            modelContext: modelContext,
+                            save: { try? modelContext.save() },
+                            isAnimatingOut: animatingOutIDs.contains(item.id)
+                        )
+                    }
+                    .onMove(perform: moveItems)
+                    .onDelete(perform: deleteItems)
+                }
+            }
         }
         .listRowSpacing(10)
         .environment(\.editMode, $editModeState)
@@ -413,12 +457,16 @@ struct ContentView: View {
     private func addItem() {
         guard let selectedSection = selectedSection, !newTaskText.isEmpty else { return }
         withAnimation {
-            let maxOrder = itemsQuery.map { $0.order }.max() ?? 0
+            // Insert new item at the top of the incomplete list (order = 0)
+            let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete }
+            for item in incomplete {
+                item.order += 1
+            }
             let newItem = Item(
                 taskText: newTaskText,
                 taskComplete: false,
                 timestamp: Date(),
-                order: maxOrder + 1,
+                order: 0,
                 parentSection: selectedSection
             )
             modelContext.insert(newItem)
@@ -452,7 +500,38 @@ struct ContentView: View {
     }
 
     private func toggleTaskCompletion(_ item: Item) {
-        item.taskComplete.toggle()
+        if item.taskComplete {
+            // Move from complete to incomplete, restore previous order
+            item.taskComplete = false
+            if let prevOrder = item.previousOrder {
+                // Shift all incomplete items with order >= prevOrder up by 1
+                let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+                for other in incomplete where other.order >= prevOrder {
+                    other.order += 1
+                }
+                item.order = prevOrder
+            } else {
+                // If no previousOrder, put at top
+                let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+                for other in incomplete {
+                    other.order += 1
+                }
+                item.order = 0
+            }
+            item.completedAt = nil
+            item.previousOrder = nil
+        } else {
+            // Move from incomplete to complete, store previous order
+            item.previousOrder = item.order
+            item.taskComplete = true
+            item.completedAt = Date()
+            // Remove from incomplete order, shift others down
+            let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+            for other in incomplete where other.order > item.order {
+                other.order -= 1
+            }
+            item.order = 0 // order is not used for complete list
+        }
         try? modelContext.save()
     }
 
@@ -594,4 +673,3 @@ private func insertPreviewData(into context: ModelContext) {
         sampleItems4.forEach { context.insert($0) }
     }
 }
-
