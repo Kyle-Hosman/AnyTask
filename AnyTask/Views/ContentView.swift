@@ -291,10 +291,11 @@ struct ContentView: View {
                             toggleTaskCompletion: toggleTaskCompletion,
                             modelContext: modelContext,
                             save: { try? modelContext.save() },
-                            isAnimatingOut: animatingOutIDs.contains(item.id)
+                            isAnimatingOut: animatingOutIDs.contains(item.id),
+                            showMoveIcon: true
                         )
                     }
-                    .onMove(perform: moveItems)
+                    .onMove(perform: moveIncompleteItems)
                     .onDelete(perform: deleteItems)
                 }
             }
@@ -312,10 +313,10 @@ struct ContentView: View {
                             toggleTaskCompletion: toggleTaskCompletion,
                             modelContext: modelContext,
                             save: { try? modelContext.save() },
-                            isAnimatingOut: animatingOutIDs.contains(item.id)
+                            isAnimatingOut: animatingOutIDs.contains(item.id),
+                            showMoveIcon: false
                         )
                     }
-                    .onMove(perform: moveItems)
                     .onDelete(perform: deleteItems)
                 }
             }
@@ -344,6 +345,7 @@ struct ContentView: View {
         let modelContext: ModelContext
         let save: () -> Void
         let isAnimatingOut: Bool
+        let showMoveIcon: Bool
 
         var body: some View {
             HStack(alignment: .center, spacing: 10) {
@@ -406,13 +408,13 @@ struct ContentView: View {
                     .frame(width: 60) // controls overall size of checkbox zone
                         
                 } else {
-                    Button(action: {
-                        editingItem = item
-                    }) {
-                        Image(systemName: "pencil")
-                            .foregroundColor(Color.primary)
-                    }
-                    .font(.title2)
+//                    Button(action: {
+//                        editingItem = item
+//                    }) {
+//                        Image(systemName: "pencil")
+//                            .foregroundColor(Color.primary)
+//                    }
+//                    .font(.title2)
                 }
             }
             .padding(10) // This gives internal space for both text & checkbox
@@ -444,6 +446,7 @@ struct ContentView: View {
             .opacity(isAnimatingOut ? 0.0 : 1.0)
             .offset(x: isAnimatingOut ? 100 : 0, y: isAnimatingOut ? -40 : 0)
             .animation(.easeInOut(duration: 0.4), value: isAnimatingOut)
+            .moveDisabled(!showMoveIcon) // disables move icon if false
         }
 
     }
@@ -488,6 +491,19 @@ struct ContentView: View {
 
     private func moveItems(from source: IndexSet, to destination: Int) {
         var reorderedItems = sortedItems
+        reorderedItems.move(fromOffsets: source, toOffset: destination)
+        for (index, item) in reorderedItems.enumerated() {
+            item.order = index
+        }
+        do {
+            try modelContext.save()
+        } catch {
+            print("Error saving reordering changes: \(error)")
+        }
+    }
+
+    private func moveIncompleteItems(from source: IndexSet, to destination: Int) {
+        var reorderedItems = incompleteItems
         reorderedItems.move(fromOffsets: source, toOffset: destination)
         for (index, item) in reorderedItems.enumerated() {
             item.order = index
