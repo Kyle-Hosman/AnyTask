@@ -189,6 +189,7 @@ struct ContentView: View {
                 HStack {
                     ForEach(sections.filter { $0.name != "Any" }) { section in
                         Button(action: {
+                            isInputFieldFocused = false
                             if editModeState == .active && selectedSection?.name == "Any" {
                                 if section.id != selectedSection?.id {
                                     pendingSection = section
@@ -334,6 +335,7 @@ struct ContentView: View {
             .padding(.vertical)
             .padding(.horizontal, 8)
         }
+        .scrollDismissesKeyboard(.immediately)
         .background(
             colorScheme == .dark
                 ? Color(.tertiarySystemBackground)
