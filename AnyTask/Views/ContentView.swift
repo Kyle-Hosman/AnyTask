@@ -32,6 +32,7 @@ struct ContentView: View {
     @State private var pendingSection: TaskSection? = nil
     @State private var pendingSectionAssignments: [UUID: TaskSection] = [:]
     @State private var animatingOutIDs: Set<UUID> = []
+    @State private var rowFrames: [UUID: CGRect] = [:]
     
 
     var sections: [TaskSection] {
@@ -52,16 +53,40 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            VStack {
-                sectionSelector
-                inputSection
-                taskList
+            ZStack {
+                VStack {
+                    sectionSelector
+                    inputSection
+                    taskList
+                }
+                .background(
+                    colorScheme == .dark
+                        ? Color(.secondarySystemBackground)
+                        : Color(.tertiarySystemBackground)
+                )
+                // Overlay animating cell on top of all others
+                if let animatingID = animatingOutIDs.first, let frame = rowFrames[animatingID], let item = (incompleteItems + completeItems).first(where: { $0.id == animatingID }) {
+                    TaskRowView(
+                        item: item,
+                        editModeState: editModeState,
+                        selectedSection: selectedSection,
+                        pendingSection: pendingSection,
+                        pendingSectionAssignments: $pendingSectionAssignments,
+                        focusedItemID: $focusedItemID,
+                        editingItem: $editingItem,
+                        toggleTaskCompletion: toggleTaskCompletion,
+                        modelContext: modelContext,
+                        save: { try? modelContext.save() },
+                        isAnimatingOut: true,
+                        showMoveIcon: false,
+                        namespace: taskMoveNamespace
+                    )
+                    .frame(width: frame.width, height: frame.height)
+                    .position(x: frame.midX, y: frame.midY)
+                    .zIndex(10000)
+                    .allowsHitTesting(false)
+                }
             }
-            .background(
-                colorScheme == .dark
-                    ? Color(.secondarySystemBackground)
-                    : Color(.tertiarySystemBackground)
-            )
             .onAppear {
                 requestNotificationPermission()
                 if sectionsQuery.isEmpty {
@@ -279,62 +304,59 @@ struct ContentView: View {
     
     // MARK: - Task List
     private var taskList: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                if !incompleteItems.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Tasks").font(.headline).padding(.leading, 8)
-                        VStack(spacing: 10) {
-                            ForEach(incompleteItems) { item in
-                                TaskRowView(
-                                    item: item,
-                                    editModeState: editModeState,
-                                    selectedSection: selectedSection,
-                                    pendingSection: pendingSection,
-                                    pendingSectionAssignments: $pendingSectionAssignments,
-                                    focusedItemID: $focusedItemID,
-                                    editingItem: $editingItem,
-                                    toggleTaskCompletion: toggleTaskCompletion,
-                                    modelContext: modelContext,
-                                    save: { try? modelContext.save() },
-                                    isAnimatingOut: animatingOutIDs.contains(item.id),
-                                    showMoveIcon: true,
-                                    namespace: taskMoveNamespace
-                                )
-                                .matchedGeometryEffect(id: item.id, in: taskMoveNamespace)
-                            }
-                        }
-                    }
+        List {
+            Section(header: Text("Tasks")) {
+                ForEach(incompleteItems, id: \ .id) { item in
+                    TaskRowView(
+                        item: item,
+                        editModeState: editModeState,
+                        selectedSection: selectedSection,
+                        pendingSection: pendingSection,
+                        pendingSectionAssignments: $pendingSectionAssignments,
+                        focusedItemID: $focusedItemID,
+                        editingItem: $editingItem,
+                        toggleTaskCompletion: toggleTaskCompletion,
+                        modelContext: modelContext,
+                        save: { try? modelContext.save() },
+                        isAnimatingOut: animatingOutIDs.contains(item.id),
+                        showMoveIcon: true,
+                        namespace: taskMoveNamespace
+                    )
+                    .matchedGeometryEffect(id: item.id, in: taskMoveNamespace)
                 }
-                if !completeItems.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Completed").font(.headline).padding(.leading, 8)
-                        VStack(spacing: 10) {
-                            ForEach(completeItems) { item in
-                                TaskRowView(
-                                    item: item,
-                                    editModeState: editModeState,
-                                    selectedSection: selectedSection,
-                                    pendingSection: pendingSection,
-                                    pendingSectionAssignments: $pendingSectionAssignments,
-                                    focusedItemID: $focusedItemID,
-                                    editingItem: $editingItem,
-                                    toggleTaskCompletion: toggleTaskCompletion,
-                                    modelContext: modelContext,
-                                    save: { try? modelContext.save() },
-                                    isAnimatingOut: animatingOutIDs.contains(item.id),
-                                    showMoveIcon: false,
-                                    namespace: taskMoveNamespace
-                                )
-                                .matchedGeometryEffect(id: item.id, in: taskMoveNamespace)
-                            }
-                        }
-                    }
+                .onDelete { offsets in
+                    deleteItems(at: offsets, in: incompleteItems)
+                }
+                .onMove(perform: moveIncompleteItems)
+            }
+            Section(header: Text("Completed")) {
+                ForEach(completeItems, id: \ .id) { item in
+                    TaskRowView(
+                        item: item,
+                        editModeState: editModeState,
+                        selectedSection: selectedSection,
+                        pendingSection: pendingSection,
+                        pendingSectionAssignments: $pendingSectionAssignments,
+                        focusedItemID: $focusedItemID,
+                        editingItem: $editingItem,
+                        toggleTaskCompletion: toggleTaskCompletion,
+                        modelContext: modelContext,
+                        save: { try? modelContext.save() },
+                        isAnimatingOut: animatingOutIDs.contains(item.id),
+                        showMoveIcon: false,
+                        namespace: taskMoveNamespace
+                    )
+                    .matchedGeometryEffect(id: item.id, in: taskMoveNamespace)
+                }
+                .onDelete { offsets in
+                    deleteItems(at: offsets, in: completeItems)
                 }
             }
-            .padding(.vertical)
-            .padding(.horizontal, 8)
         }
+        .padding(.vertical)
+        .padding(.horizontal, 8)
+        .listStyle(.insetGrouped)
+        .environment(\.editMode, $editModeState)
         .scrollDismissesKeyboard(.immediately)
         .background(
             colorScheme == .dark
@@ -360,86 +382,90 @@ struct ContentView: View {
         let namespace: Namespace.ID // Add namespace
 
         var body: some View {
-            HStack(alignment: .center, spacing: 10) {
-                VStack(alignment: .leading, spacing: 4) {
+            ZStack {
+                Color(.systemGroupedBackground)
+                HStack(alignment: .center, spacing: 10) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        if editModeState != .active {
+                            Text(item.taskText)
+                                .font(.body)
+                                .lineLimit(3)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .layoutPriority(1)
+                        } else {
+                            TextField("Task Name", text: Binding(
+                                get: { item.taskText },
+                                set: { newValue in
+                                    item.taskText = newValue
+                                    try? modelContext.save()
+                                }
+                            ))
+                            .focused(focusedItemID, equals: item.id)
+                            .disabled(editModeState == .active)
+                        }
+                        
+                        if let dueDate = item.dueDate {
+                            Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
+                                .font(.footnote)
+                                .foregroundColor(Color.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(1)
+                    
                     if editModeState != .active {
-                        Text(item.taskText)
-                            .font(.body)
-                            .lineLimit(3)
-                            .fixedSize(horizontal: false, vertical: true)
-                            .layoutPriority(1)
-                    } else {
-                        TextField("Task Name", text: Binding(
-                            get: { item.taskText },
-                            set: { newValue in
-                                item.taskText = newValue
-                                try? modelContext.save()
-                            }
-                        ))
-                        .focused(focusedItemID, equals: item.id)
-                        .disabled(editModeState == .active)
-                    }
-
-                    if let dueDate = item.dueDate {
-                        Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
-                            .font(.footnote)
-                            .foregroundColor(Color.secondary)
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .layoutPriority(1)
-
-                if editModeState != .active {
-                    GeometryReader { geometry in
-                        ZStack {
-                            //Color.yellow.opacity(0.3) // debug highlight
-                            Color.clear
-
-                            HStack {
-                                Spacer()
-                                RoundedRectangle(cornerRadius: 4)
-                                    .stroke(Color.black, lineWidth: 2)
-                                    .frame(width: 28, height: 28)
-                                    .overlay(
-                                        item.taskComplete ?
+                        GeometryReader { geometry in
+                            ZStack {
+                                //Color.yellow.opacity(0.3) // debug highlight
+                                Color.clear
+                                
+                                HStack {
+                                    Spacer()
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .frame(width: 28, height: 28)
+                                        .overlay(
+                                            item.taskComplete ?
                                             Image(systemName: "checkmark")
                                                 .foregroundColor(Color.primary)
                                             : nil
-                                    )
+                                        )
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                generator.impactOccurred()
+                                toggleTaskCompletion(item)
+                            }
                         }
-                        .frame(width: geometry.size.width, height: geometry.size.height)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            let generator = UIImpactFeedbackGenerator(style: .medium)
-                            generator.impactOccurred()
-                            toggleTaskCompletion(item)
-                        }
-                    }
-                    .frame(width: 60) // controls overall size of checkbox zone
+                        .frame(width: 60) // controls overall size of checkbox zone
                         
-                } else {
-//                    Button(action: {
-//                        editingItem = item
-//                    }) {
-//                        Image(systemName: "pencil")
-//                            .foregroundColor(Color.primary)
-//                    }
-//                    .font(.title2)
+                    } else {
+                        //                    Button(action: {
+                        //                        editingItem = item
+                        //                    }) {
+                        //                        Image(systemName: "pencil")
+                        //                            .foregroundColor(Color.primary)
+                        //                    }
+                        //                    .font(.title2)
+                    }
                 }
-            }
-            .padding(10) // This gives internal space for both text & checkbox
-            .background(
-                Color.fromName(
-                    (editModeState == .active &&
-                     selectedSection?.name == "Any" &&
-                     pendingSectionAssignments[item.id] != nil)
-                    ? pendingSectionAssignments[item.id]?.colorName ?? ".gray"
-                    : selectedSection?.colorName ?? ".gray"
+                .padding(15) // Internal
+                .background(
+                    Color.fromName(
+                        (editModeState == .active &&
+                         selectedSection?.name == "Any" &&
+                         pendingSectionAssignments[item.id] != nil)
+                        ? pendingSectionAssignments[item.id]?.colorName ?? ".gray"
+                        : selectedSection?.colorName ?? ".gray"
+                    )
                 )
-            )
-            .cornerRadius(8)
+                .cornerRadius(8)
+            }
+            .padding(.vertical, 6) // Space between rows
             .listRowBackground(Color.clear)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets())
@@ -454,9 +480,11 @@ struct ContentView: View {
                     editingItem = item
                 }
             }
-            .scaleEffect(isAnimatingOut ? 0.1 : 1.0)
-            .opacity(isAnimatingOut ? 0.0 : 1.0)
-            .offset(x: isAnimatingOut ? 100 : 0, y: isAnimatingOut ? -40 : 0)
+            .moveDisabled(!showMoveIcon) // disables move icon if false
+            // Slide vertically and fade out while animating out
+            .offset(y: isAnimatingOut ? (item.taskComplete ? -60 : 60) : 0)
+            .opacity(isAnimatingOut ? 0.2 : 1.0)
+            .zIndex(isAnimatingOut ? 1000 : 0) // Ensure animating row is above all others
             .animation(.easeInOut(duration: 0.4), value: isAnimatingOut)
             .moveDisabled(!showMoveIcon) // disables move icon if false
         }
@@ -492,10 +520,9 @@ struct ContentView: View {
         }
     }
 
-    private func deleteItems(at offsets: IndexSet) {
-        let filteredItems = sortedItems
+    private func deleteItems(at offsets: IndexSet, in items: [Item]) {
         for index in offsets {
-            let item = filteredItems[index]
+            let item = items[index]
             cancelNotification(for: item)
             modelContext.delete(item)
         }
@@ -522,49 +549,53 @@ struct ContentView: View {
         }
         do {
             try modelContext.save()
+            // Force a refresh if needed (optional, usually not needed with SwiftData)
+            // self.objectWillChange.send()
         } catch {
             print("Error saving reordering changes: \(error)")
         }
     }
 
     private func toggleTaskCompletion(_ item: Item) {
-        withAnimation(.easeInOut) {
-            if item.taskComplete {
-                // Move from complete to incomplete, restore previous order
-                item.taskComplete = false
-                if let prevOrder = item.previousOrder {
-                    // Shift all incomplete items with order >= prevOrder up by 1
-                    let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
-                    for other in incomplete where other.order >= prevOrder {
-                        other.order += 1
+        // Start animating out
+        animatingOutIDs.insert(item.id)
+        // Wait for the animation to finish (0.4s matches your animation)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            withAnimation(.easeInOut) {
+                if item.taskComplete {
+                    // Move from complete to incomplete, restore previous order
+                    item.taskComplete = false
+                    if let prevOrder = item.previousOrder {
+                        let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+                        for other in incomplete where other.order >= prevOrder {
+                            other.order += 1
+                        }
+                        item.order = prevOrder
+                    } else {
+                        let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
+                        for other in incomplete {
+                            other.order += 1
+                        }
+                        item.order = 0
                     }
-                    item.order = prevOrder
+                    item.completedAt = nil
+                    item.previousOrder = nil
                 } else {
-                    // If no previousOrder, put at top
+                    // Move from incomplete to complete, store previous order
+                    item.previousOrder = item.order
+                    item.taskComplete = true
+                    item.completedAt = Date()
                     let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
-                    for other in incomplete {
-                        other.order += 1
+                    for other in incomplete where other.order > item.order {
+                        other.order -= 1
                     }
                     item.order = 0
                 }
-                item.completedAt = nil
-                item.previousOrder = nil
-            } else {
-                // Move from incomplete to complete, store previous order
-                item.previousOrder = item.order
-                item.taskComplete = true
-                item.completedAt = Date()
-                // Remove from incomplete order, shift others down
-                let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
-                for other in incomplete where other.order > item.order {
-                    other.order -= 1
-                }
-                item.order = 0 // order is not used for complete list
+                try? modelContext.save()
+                animatingOutIDs.remove(item.id)
             }
-            try? modelContext.save()
         }
     }
-
     private func addSection(name: String, colorName: String, iconName: String) {
         withAnimation {
             let maxOrder = sectionsQuery.map { $0.order }.max() ?? 0
