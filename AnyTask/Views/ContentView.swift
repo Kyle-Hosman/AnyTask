@@ -293,26 +293,26 @@ struct ContentView: View {
     // MARK: - TextField
     private var inputSection: some View {
         HStack {
-            TextField("Enter task", text: $newTaskText)
-                .padding()
-                .background(Color(Color.fromName(selectedSection?.colorName ?? ".gray")))
-                .cornerRadius(16)
-                .font(.system(size: 18))
-                .focused($isInputFieldFocused)
-                .tint(.black)
-                .highPriorityGesture(TapGesture().onEnded {
-                    if editModeState == .active {
-                        withAnimation {
-                            editModeState = .inactive
-                        }
-                    } else {
+            ZStack(alignment: .trailing) {
+                TextField("Enter task", text: $newTaskText)
+                    .padding()
+                    .background(Color(Color.fromName(selectedSection?.colorName ?? ".gray")))
+                    .cornerRadius(16)
+                    .font(.system(size: 18))
+                    .focused($isInputFieldFocused)
+                    .tint(.black)
+                    .onSubmit {
+                        addItem()
                         isInputFieldFocused = true
                     }
-                })
-                .onSubmit {
-                    addItem()
-                    isInputFieldFocused = true
+                if !newTaskText.isEmpty {
+                    Button(action: { newTaskText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.trailing, 16)
                 }
+            }
         }
         .padding(.horizontal)
         .padding(.vertical)
