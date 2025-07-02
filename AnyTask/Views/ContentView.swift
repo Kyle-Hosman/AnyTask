@@ -33,6 +33,8 @@ struct ContentView: View {
     @State private var pendingSectionAssignments: [UUID: TaskSection] = [:]
     @State private var animatingOutIDs: Set<UUID> = []
     @State private var rowFrames: [UUID: CGRect] = [:]
+    @State private var startListAnimation: Bool = false
+    @State private var startTitleAnimation: Bool = false
     
 
     var sections: [TaskSection] {
@@ -98,9 +100,16 @@ struct ContentView: View {
                     selectedSection = sectionsQuery.first
                 }
             }
-            .navigationTitle("AnyTask")
-            .navigationBarTitleDisplayMode(.large)
+           // .navigationTitle("AnyTask")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .principal) {
+                        Text("AnyTask")
+                            .font(.largeTitle.bold())
+                            //.scaleEffect(startTitleAnimation ? 1.2 : 1.0)
+                            .rotation3DEffect(.degrees(startTitleAnimation ? 359 : 0), axis: (x: 0, y: 1, z: 0))
+                            .animation(.easeInOut(duration: 1), value: startTitleAnimation)
+                    }
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("New Section") {
                         isShowingNewSectionSheet = true
@@ -134,6 +143,13 @@ struct ContentView: View {
                     }
                 }
             }
+            .onAppear {
+                startTitleAnimation = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        startTitleAnimation = false
+                    }
+            }
+           
             .environment(\.editMode, $editModeState)
             .sheet(isPresented: Binding<Bool>(
                 get: { editingItem != nil },
@@ -353,6 +369,12 @@ struct ContentView: View {
                 }
             }
         }
+        .opacity(startListAnimation ? 1.0 : 0.5)
+        .offset(CGSize(width: 0, height: startListAnimation ? -10 : 0))
+        .animation(.easeInOut(duration: 1).delay(1), value: startListAnimation)
+        .onAppear {
+            startListAnimation = true
+        }
         .padding(.vertical)
         .padding(.horizontal, 8)
         .listStyle(.insetGrouped)
@@ -487,6 +509,7 @@ struct ContentView: View {
             .zIndex(isAnimatingOut ? 1000 : 0) // Ensure animating row is above all others
             .animation(.easeInOut(duration: 0.4), value: isAnimatingOut)
             .moveDisabled(!showMoveIcon) // disables move icon if false
+            
         }
 
     }
