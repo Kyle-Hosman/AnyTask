@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import UserNotifications
+import WidgetKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -35,6 +36,18 @@ struct ContentView: View {
     @State private var rowFrames: [UUID: CGRect] = [:]
     @State private var startListAnimation: Bool = false
     @State private var startTitleAnimation: Bool = false
+    
+    private func updateWidgetData() {
+            guard let selectedSection = self.selectedSection else { return }
+            let tasks = self.itemsQuery
+                .filter { $0.parentSection == selectedSection && !$0.taskComplete }
+                .sorted { $0.order < $1.order }
+                .map { $0.taskText }
+            let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+            defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
+            defaults?.set(tasks, forKey: "WidgetTasks")
+            WidgetCenter.shared.reloadAllTimelines()
+    }
     
 
     var sections: [TaskSection] {
@@ -241,6 +254,7 @@ struct ContentView: View {
                                 selectSection(section)
                                 pendingSection = nil
                             }
+                            updateWidgetData()
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: section.iconName)
@@ -548,6 +562,8 @@ struct ContentView: View {
             if newItem.dueDate != nil {
                 scheduleNotification(for: newItem)
             }
+            
+            updateWidgetData()
         }
     }
 
@@ -557,6 +573,7 @@ struct ContentView: View {
             cancelNotification(for: item)
             modelContext.delete(item)
         }
+        updateWidgetData()
     }
 
     private func moveItems(from source: IndexSet, to destination: Int) {
@@ -570,6 +587,7 @@ struct ContentView: View {
         } catch {
             print("Error saving reordering changes: \(error)")
         }
+        updateWidgetData()
     }
 
     private func moveIncompleteItems(from source: IndexSet, to destination: Int) {
@@ -585,6 +603,7 @@ struct ContentView: View {
         } catch {
             print("Error saving reordering changes: \(error)")
         }
+        updateWidgetData()
     }
 
     private func toggleTaskCompletion(_ item: Item) {
@@ -625,6 +644,7 @@ struct ContentView: View {
                 try? modelContext.save()
                 animatingOutIDs.remove(item.id)
             }
+            updateWidgetData()
         }
     }
     private func addSection(name: String, colorName: String, iconName: String) {
