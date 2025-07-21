@@ -46,6 +46,7 @@ struct ContentView: View {
             let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
             defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
             defaults?.set(tasks, forKey: "WidgetTasks")
+            defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
             WidgetCenter.shared.reloadAllTimelines()
     }
     

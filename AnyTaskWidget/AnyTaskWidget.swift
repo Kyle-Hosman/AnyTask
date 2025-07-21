@@ -1,22 +1,17 @@
-//
-//  AnyTaskWidget.swift
-//  AnyTaskWidget
-//
-//  Created by Kyle Hosman on 7/21/25.
-//
-
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 struct TaskEntry: TimelineEntry {
     let date: Date
     let sectionName: String
+    let sectionColorName: String
     let tasks: [String]
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", tasks: ["Sample Task 1", "Sample Task 2"])
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", tasks: ["Sample Task 1", "Sample Task 2"])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -32,25 +27,59 @@ struct Provider: TimelineProvider {
     private func loadEntry() -> TaskEntry {
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         let sectionName = defaults?.string(forKey: "WidgetSectionName") ?? "No List"
+        let sectionColorName = defaults?.string(forKey: "WidgetSectionColor") ?? ".gray"
         let tasks = defaults?.stringArray(forKey: "WidgetTasks") ?? []
-        return TaskEntry(date: Date(), sectionName: sectionName, tasks: Array(tasks.prefix(3)))
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, tasks: Array(tasks.prefix(3)))
     }
 }
+
+
 
 struct AnyTaskWidgetEntryView: View {
     var entry: TaskEntry
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: 8) {
             Text(entry.sectionName)
                 .font(.headline)
+                .padding(.top, 5)
             ForEach(entry.tasks, id: \.self) { task in
-                Text("• \(task)")
-                    .font(.body)
+                HStack(spacing: 8) {
+                    Button(intent: CompleteTaskIntent(taskID: task)) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.black, lineWidth: 2)
+                            .frame(width: 20, height: 20)
+                    }
+                    Text(task)
+                        .font(.subheadline)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .padding(.leading, 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(8)
+                .background(Color.fromName(entry.sectionColorName))
+                .cornerRadius(12)
             }
         }
         .padding()
-        .containerBackground(for: .widget) { Color.clear }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .containerBackground(for: .widget) { Color(.systemBackground) }
+    }
+}
+
+extension Color {
+    static func fromName(_ name: String) -> Color {
+        switch name {
+        case ".blue": return .blue.opacity(0.5)
+        case ".red": return .red.opacity(0.5)
+        case ".green": return .green.opacity(0.5)
+        case ".yellow": return .yellow.opacity(0.5)
+        case ".purple": return .purple.opacity(0.5)
+        case ".black": return .black
+        case ".white": return .white
+        default: return .gray.opacity(0.5)
+        }
     }
 }
 
@@ -67,23 +96,8 @@ struct AnyTaskWidget: Widget {
     }
 }
 
-//extension ConfigurationAppIntent {
-//    fileprivate static var smiley: ConfigurationAppIntent {
-//        let intent = ConfigurationAppIntent()
-//        intent.favoriteEmoji = "😀"
-//        return intent
-//    }
-//    
-//    fileprivate static var starEyes: ConfigurationAppIntent {
-//        let intent = ConfigurationAppIntent()
-//        intent.favoriteEmoji = "🤩"
-//        return intent
-//    }
-//}
-
 #Preview(as: .systemSmall) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", tasks: ["Sample Task 1", "Sample Task 2"])
-//    TaskEntry(date: .now.addingTimeInterval(3600), sectionName: "In Progress", tasks: ["Sample Task 3", "Sample Task 4"])
+    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", tasks: ["Sample Task 1", "Sample Task 2"])
 }

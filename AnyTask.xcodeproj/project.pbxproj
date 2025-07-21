@@ -68,6 +68,13 @@
 			);
 			target = 275D7E202E2EB6B10098E17A /* AnyTaskWidgetExtension */;
 		};
+		27CB69B92E2EC96B00DE7721 /* Exceptions for "AnyTask" folder in "AnyTaskWidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AnyTaskAppIntent.swift,
+			);
+			target = 275D7E202E2EB6B10098E17A /* AnyTaskWidgetExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -81,6 +88,9 @@
 		};
 		27D96F662DC0520300259D9D /* AnyTask */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				27CB69B92E2EC96B00DE7721 /* Exceptions for "AnyTask" folder in "AnyTaskWidgetExtension" target */,
+			);
 			path = AnyTask;
 			sourceTree = "<group>";
 		};
