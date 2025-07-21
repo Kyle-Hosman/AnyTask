@@ -89,6 +89,7 @@ struct ContentView: View {
                     .allowsHitTesting(false)
                 }
             }
+            .ignoresSafeArea(.container, edges: .bottom)
             .onAppear {
                 requestNotificationPermission()
                 if sectionsQuery.isEmpty {
@@ -249,14 +250,14 @@ struct ContentView: View {
                             }
                             .padding(10)
                             .background(
-                                RoundedRectangle(cornerRadius: 8)
+                                RoundedRectangle(cornerRadius: 12)
                                     .fill(
                                         (editModeState == .active && selectedSection?.name == "Any" && section.id == pendingSection?.id)
                                         ? Color.fromName(section.colorName)
                                         : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
                                     )
                                     .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
+                                        RoundedRectangle(cornerRadius: 12)
                                             .stroke(Color.fromName(section.colorName), lineWidth: 2)
                                     )
                             )
@@ -297,7 +298,7 @@ struct ContentView: View {
                 TextField("Enter task", text: $newTaskText)
                     .padding()
                     .background(Color(Color.fromName(selectedSection?.colorName ?? ".gray")))
-                    .cornerRadius(16)
+                    .cornerRadius(12)
                     .font(.system(size: 18))
                     .focused($isInputFieldFocused)
                     .tint(.black)
@@ -306,7 +307,13 @@ struct ContentView: View {
                         isInputFieldFocused = true
                     }
                 if !newTaskText.isEmpty {
-                    Button(action: { newTaskText = "" }) {
+                    Button(action: {
+                        isInputFieldFocused = false
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                            newTaskText = ""
+                            isInputFieldFocused = true // Optional: restore focus
+                        }
+                    }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.secondary)
                     }
@@ -314,8 +321,9 @@ struct ContentView: View {
                 }
             }
         }
-        .padding(.horizontal)
-        .padding(.vertical)
+        .padding(. horizontal, 26)
+        .padding(.vertical, 10)
+        .padding(.bottom, 10)
     }
     
     // MARK: - Task List
@@ -375,7 +383,7 @@ struct ContentView: View {
         .onAppear {
             startListAnimation = true
         }
-        .padding(.vertical)
+        //.padding(.vertical)
         .padding(.horizontal, 8)
         .listStyle(.insetGrouped)
         .environment(\.editMode, $editModeState)
@@ -485,7 +493,7 @@ struct ContentView: View {
                         : selectedSection?.colorName ?? ".gray"
                     )
                 )
-                .cornerRadius(8)
+                .cornerRadius(12)
             }
             .padding(.vertical, 6) // Space between rows
             .listRowBackground(Color.clear)

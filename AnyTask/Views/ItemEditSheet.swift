@@ -1,6 +1,5 @@
 import SwiftUI
 
-
 struct ItemEditSheet: View {
     @Bindable var item: Item
     var sections: [TaskSection]
@@ -10,6 +9,7 @@ struct ItemEditSheet: View {
     @State private var editedText: String
     @State private var selectedSection: TaskSection
     @State private var dueDate: Date
+    @State private var hasDueDate: Bool
 
     init(item: Item, sections: [TaskSection], onSave: @escaping (Item) -> Void, onCancel: @escaping () -> Void) {
         self.item = item
@@ -19,6 +19,7 @@ struct ItemEditSheet: View {
         _editedText = State(initialValue: item.taskText)
         _selectedSection = State(initialValue: item.parentSection ?? sections.first!)
         _dueDate = State(initialValue: item.dueDate ?? Date())
+        _hasDueDate = State(initialValue: item.dueDate != nil)
     }
 
     var body: some View {
@@ -53,21 +54,26 @@ struct ItemEditSheet: View {
                     }
                     .padding(.top)
                 }
-                Section(header: Text("Due Date")) {
-                    DatePicker("Due Date", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+                Section(header: Text("Notify at:")) {
+                    Toggle("Date", isOn: $hasDueDate)
+                    if hasDueDate {
+                        DatePicker("", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+                    }
                 }
             }
             .navigationTitle("Edit Task")
-            .navigationBarItems(leading: Button("Cancel", action: onCancel), trailing: Button("Save") {
-                item.taskText = editedText
-                item.parentSection = selectedSection
-                item.dueDate = dueDate
-                onSave(item)
-                if item.dueDate != nil {
-                    NotificationManager.scheduleNotification(for: item)
+            .navigationBarItems(
+                leading: Button("Cancel", action: onCancel),
+                trailing: Button("Save") {
+                    item.taskText = editedText
+                    item.parentSection = selectedSection
+                    item.dueDate = hasDueDate ? dueDate : nil
+                    onSave(item)
+                    if item.dueDate != nil {
+                        NotificationManager.scheduleNotification(for: item)
+                    }
                 }
-            })
+            )
         }
     }
 }
-
