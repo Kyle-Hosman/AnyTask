@@ -43,6 +43,7 @@ struct AnyTaskWidgetEntryView: View {
             Text(entry.sectionName)
                 .font(.headline)
                 .padding(.top, 5)
+            //Spacer()
             ForEach(entry.tasks, id: \.self) { task in
                 HStack(spacing: 8) {
                     Button(intent: CompleteTaskIntent(taskID: task)) {
@@ -57,13 +58,13 @@ struct AnyTaskWidgetEntryView: View {
                         .padding(.leading, 2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(8)
+                .padding(0)
                 .background(Color.fromName(entry.sectionColorName))
                 .cornerRadius(12)
             }
         }
         .padding()
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .frame(maxWidth: .infinity, maxHeight: 192, alignment: .topLeading)
         .containerBackground(for: .widget) { Color(.systemBackground) }
     }
 }
@@ -99,5 +100,5 @@ struct AnyTaskWidget: Widget {
 #Preview(as: .systemSmall) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", tasks: ["Sample Task 1", "Sample Task 2"])
+    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", tasks: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"])
 }
