@@ -6,6 +6,7 @@ struct TaskEntry: TimelineEntry {
     let date: Date
     let sectionName: String
     let sectionColorName: String
+    let sectionIconName: String
     let taskIDs: [String]
     let taskTexts: [String]
     let completedIDs: Set<String>
@@ -13,7 +14,7 @@ struct TaskEntry: TimelineEntry {
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [])
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -30,10 +31,11 @@ struct Provider: TimelineProvider {
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         let sectionName = defaults?.string(forKey: "WidgetSectionName") ?? "No List"
         let sectionColorName = defaults?.string(forKey: "WidgetSectionColor") ?? ".gray"
+        let sectionIconName = defaults?.string(forKey: "WidgetSectionIcon") ?? "folder"
         let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
         let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
         let completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs)
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs)
     }
 }
 
@@ -44,9 +46,15 @@ struct AnyTaskWidgetEntryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(entry.sectionName)
-                .font(.headline)
-                .padding(.top, 5)
+            HStack(spacing: 6) {
+                Image(systemName: entry.sectionIconName)
+                    .font(.headline)
+                    .foregroundColor(Color.primary)
+                    .padding(.top, 5)
+                Text(entry.sectionName)
+                    .font(.headline)
+                    .padding(.top, 5)
+            }
             ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
                 HStack(spacing: 8) {
                     Button(intent: CompleteTaskIntent(taskID: id)) {
@@ -110,5 +118,5 @@ struct AnyTaskWidget: Widget {
 #Preview(as: .systemSmall) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [])
+    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [])
 }

@@ -51,6 +51,7 @@ struct ContentView: View {
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
         defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
+        defaults?.set(selectedSection.iconName, forKey: "WidgetSectionIcon")
         defaults?.set(taskIDs, forKey: "WidgetTaskIDs")
         defaults?.set(taskTexts, forKey: "WidgetTaskTexts")
         defaults?.set(completedIDs, forKey: "WidgetCompletedTaskIDs")
