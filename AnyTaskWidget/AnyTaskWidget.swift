@@ -45,46 +45,64 @@ struct AnyTaskWidgetEntryView: View {
     var entry: TaskEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 6) {
-                Image(systemName: entry.sectionIconName)
-                    .font(.headline)
-                    .foregroundColor(Color.primary)
-                    .padding(.top, 5)
+        HStack(alignment: .top, spacing: 0) {
+            // Left-side
+            VStack(alignment: .center, spacing: 0) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.fromName(entry.sectionColorName))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: entry.sectionIconName)
+                        .font(.headline)
+                        .foregroundColor(Color.primary)
+                }
+                //.padding(.top, 26)
                 Text(entry.sectionName)
-                    .font(.headline)
-                    .padding(.top, 5)
+                    .font(.system(size: 18, weight: .bold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7) // Shrinks font size
+                    .foregroundColor(Color.fromName(entry.sectionColorName).opacity(100))
+                    .padding(.top, 15)
             }
-            ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
-                HStack(spacing: 8) {
-                    Button(intent: CompleteTaskIntent(taskID: id)) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.black, lineWidth: 2)
-                                .frame(width: 20, height: 20)
-                            if entry.completedIDs.contains(id) {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(Color.primary)
-                                    .font(.system(size: 12, weight: .bold))
+            .frame(width: 80) // Left-size width
+            .padding(.trailing, 12)
+
+            // Right-side
+            VStack(alignment: .leading, spacing: 8) {
+                
+                ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
+                    HStack(spacing: 8) {
+                        Button(intent: CompleteTaskIntent(taskID: id)) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .stroke(Color.black, lineWidth: 2)
+                                    .frame(width: 25, height: 25)
+                                if entry.completedIDs.contains(id) {
+                                    Image(systemName: "checkmark")
+                                        .foregroundColor(Color.primary)
+                                        .font(.system(size: 12, weight: .bold))
+                                }
                             }
                         }
+                        Text(text)
+                            .font(.subheadline)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .padding(.leading, 2)
                     }
-                    Text(text)
-                        .font(.subheadline)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .padding(.leading, 2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(2)
+                    .background(Color.fromName(entry.sectionColorName))
+                    .cornerRadius(12)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(0)
-                .background(Color.fromName(entry.sectionColorName))
-                .cornerRadius(12)
             }
+            //.padding(.top, 25)
+            //.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .containerBackground(for: .widget) { Color(.systemBackground) }
         }
-        .padding()
-        .frame(maxWidth: .infinity, maxHeight: 192, alignment: .topLeading)
-        .containerBackground(for: .widget) { Color(.systemBackground) }
+        
     }
+        
 }
 
 extension Color {
