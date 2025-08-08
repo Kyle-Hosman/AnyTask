@@ -6,12 +6,14 @@ struct TaskEntry: TimelineEntry {
     let date: Date
     let sectionName: String
     let sectionColorName: String
-    let tasks: [String]
+    let taskIDs: [String]
+    let taskTexts: [String]
+    let completedIDs: Set<String>
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", tasks: ["Sample Task 1", "Sample Task 2"])
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -28,8 +30,10 @@ struct Provider: TimelineProvider {
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         let sectionName = defaults?.string(forKey: "WidgetSectionName") ?? "No List"
         let sectionColorName = defaults?.string(forKey: "WidgetSectionColor") ?? ".gray"
-        let tasks = defaults?.stringArray(forKey: "WidgetTasks") ?? []
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, tasks: Array(tasks.prefix(3)))
+        let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
+        let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
+        let completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs)
     }
 }
 
@@ -43,15 +47,21 @@ struct AnyTaskWidgetEntryView: View {
             Text(entry.sectionName)
                 .font(.headline)
                 .padding(.top, 5)
-            //Spacer()
-            ForEach(entry.tasks, id: \.self) { task in
+            ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
                 HStack(spacing: 8) {
-                    Button(intent: CompleteTaskIntent(taskID: task)) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .stroke(Color.black, lineWidth: 2)
-                            .frame(width: 20, height: 20)
+                    Button(intent: CompleteTaskIntent(taskID: id)) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.black, lineWidth: 2)
+                                .frame(width: 20, height: 20)
+                            if entry.completedIDs.contains(id) {
+                                Image(systemName: "checkmark")
+                                    .foregroundColor(Color.primary)
+                                    .font(.system(size: 12, weight: .bold))
+                            }
+                        }
                     }
-                    Text(task)
+                    Text(text)
                         .font(.subheadline)
                         .lineLimit(1)
                         .truncationMode(.tail)
@@ -100,5 +110,5 @@ struct AnyTaskWidget: Widget {
 #Preview(as: .systemSmall) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", tasks: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"])
+    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [])
 }

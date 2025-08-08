@@ -13,6 +13,7 @@ import WidgetKit
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.scenePhase) private var scenePhase
 
     @Namespace private var taskMoveNamespace // For matchedGeometryEffect
 
@@ -38,16 +39,39 @@ struct ContentView: View {
     @State private var startTitleAnimation: Bool = false
     
     private func updateWidgetData() {
-            guard let selectedSection = self.selectedSection else { return }
-            let tasks = self.itemsQuery
-                .filter { $0.parentSection == selectedSection && !$0.taskComplete }
-                .sorted { $0.order < $1.order }
-                .map { $0.taskText }
-            let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
-            defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
-            defaults?.set(tasks, forKey: "WidgetTasks")
-            defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
-            WidgetCenter.shared.reloadAllTimelines()
+        guard let selectedSection = self.selectedSection else { return }
+        let incompleteItems = self.itemsQuery
+            .filter { $0.parentSection == selectedSection && !$0.taskComplete }
+            .sorted { $0.order < $1.order }
+        let taskIDs = incompleteItems.map { $0.id.uuidString }
+        let taskTexts = incompleteItems.map { $0.taskText }
+        let completedIDs = self.itemsQuery
+            .filter { $0.parentSection == selectedSection && $0.taskComplete }
+            .map { $0.id.uuidString }
+        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+        defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
+        defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
+        defaults?.set(taskIDs, forKey: "WidgetTaskIDs")
+        defaults?.set(taskTexts, forKey: "WidgetTaskTexts")
+        defaults?.set(completedIDs, forKey: "WidgetCompletedTaskIDs")
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+    
+    private func syncCompletionStateFromWidget() {
+        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+        let completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
+        for item in itemsQuery {
+            let shouldBeComplete = completedIDs.contains(item.id.uuidString)
+            if item.taskComplete != shouldBeComplete {
+                item.taskComplete = shouldBeComplete
+                if shouldBeComplete {
+                    item.completedAt = Date()
+                } else {
+                    item.completedAt = nil
+                }
+            }
+        }
+        try? modelContext.save()
     }
     
 
@@ -113,6 +137,13 @@ struct ContentView: View {
                 }
                 if selectedSection == nil {
                     selectedSection = sectionsQuery.first
+                }
+                syncCompletionStateFromWidget()
+            }
+            .onChange(of: scenePhase) {
+                if scenePhase == .active {
+                    syncCompletionStateFromWidget()
+                    updateWidgetData()
                 }
             }
            // .navigationTitle("AnyTask")
