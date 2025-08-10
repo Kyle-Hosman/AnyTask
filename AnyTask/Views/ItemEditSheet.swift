@@ -30,59 +30,9 @@ struct ItemEditSheet: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Task")) {
-                    TextField("Task Name", text: $editedText)
-                }
-                Section(header: Text("Section")) {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack {
-                            ForEach(sections) { section in
-                                Button(action: {
-                                    selectedSection = section
-                                }) {
-                                    Text(section.name)
-                                        .padding(10)
-                                        .background(
-                                            RoundedRectangle(cornerRadius: 8)
-                                                .fill(selectedSection.id == section.id ? Color.fromName(section.colorName) : Color.clear)
-                                                .overlay(
-                                                    RoundedRectangle(cornerRadius: 8)
-                                                        .stroke(Color.fromName(section.colorName), lineWidth: 2)
-                                                )
-                                        )
-                                        .foregroundColor(Color.primary)
-                                }
-                                .disabled(!section.isEditable && section != selectedSection)
-                            }
-                        }
-                        .padding(.horizontal)
-                    }
-                    .padding(.top)
-                }
-                Section(header: Text("Notify at:")) {
-                    Toggle("Date", isOn: $hasDueDate)
-                    if hasDueDate {
-                        DatePicker("", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
-                        Toggle("Repeat", isOn: $repeatNotification)
-                        if repeatNotification {
-                            HStack {
-                                Text("Repeat every")
-                                Spacer()
-                                Picker("Interval", selection: $repeatInterval) {
-                                    Text("1 min").tag(60.0)
-                                    Text("15 min").tag(900.0)
-                                    Text("30 min").tag(1800.0)
-                                    Text("1 hour").tag(3600.0)
-                                    Text("2 hours").tag(7200.0)
-                                    Text("1 day").tag(86400.0)
-                                    Text("1 week").tag(604800.0)
-                                }
-                                .pickerStyle(MenuPickerStyle())
-                                Text(intervalString(for: repeatInterval))
-                            }
-                        }
-                    }
-                }
+                taskSection
+                sectionSection
+                notifySection
             }
             .navigationTitle("Edit Task")
             .navigationBarItems(
@@ -102,6 +52,56 @@ struct ItemEditSheet: View {
         }
     }
 
+    private var taskSection: some View {
+        Section(header: Text("Task")) {
+            TextField("Task Name", text: $editedText)
+        }
+    }
+
+    private var sectionSection: some View {
+        Section(header: Text("Section")) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack {
+                    ForEach(sections) { section in
+                        Button(action: {
+                            selectedSection = section
+                        }) {
+                            Text(section.name)
+                                .padding(10)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(selectedSection.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                        )
+                                )
+                                .foregroundColor(Color.primary)
+                        }
+                        .disabled(!section.isEditable && section != selectedSection)
+                    }
+                }
+                .padding(.horizontal)
+            }
+            .padding(.top)
+        }
+    }
+
+    private var notifySection: some View {
+        Section(header: Text("Notify at:")) {
+            Toggle("Date", isOn: $hasDueDate)
+            if hasDueDate {
+                DatePicker("", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
+                    //.minuteInterval(5)
+                Toggle("Repeat", isOn: $repeatNotification)
+                if repeatNotification {
+                    RepeatIntervalRow(repeatInterval: $repeatInterval)
+                    Text(intervalString(for: repeatInterval))
+                }
+            }
+        }
+    }
+
     // Helper for interval string
     private func intervalString(for interval: TimeInterval) -> String {
         switch interval {
@@ -111,7 +111,27 @@ struct ItemEditSheet: View {
         case 7200: return "2 hours"
         case 86400: return "1 day"
         case 604800: return "1 week"
+        case 60: return "1 min"
         default: return "Custom"
+        }
+    }
+    private struct RepeatIntervalRow: View {
+        @Binding var repeatInterval: TimeInterval
+        var body: some View {
+            HStack {
+                Text("Repeat every")
+                Spacer()
+                Picker("Interval", selection: $repeatInterval) {
+                    Text("1 min").tag(60.0)
+                    Text("15 min").tag(900.0)
+                    Text("30 min").tag(1800.0)
+                    Text("1 hour").tag(3600.0)
+                    Text("2 hours").tag(7200.0)
+                    Text("1 day").tag(86400.0)
+                    Text("1 week").tag(604800.0)
+                }
+                .pickerStyle(MenuPickerStyle())
+            }
         }
     }
 }
