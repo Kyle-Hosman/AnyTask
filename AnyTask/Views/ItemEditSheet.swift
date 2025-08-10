@@ -88,49 +88,36 @@ struct ItemEditSheet: View {
     }
 
     private var notifySection: some View {
-        Section(header: Text("Notify at:")) {
+        UIDatePicker.appearance().minuteInterval = 5
+        return Section(header: Text("Notify at:")) {
             Toggle("Date", isOn: $hasDueDate)
             if hasDueDate {
                 DatePicker("", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
-                    //.minuteInterval(5)
                 Toggle("Repeat", isOn: $repeatNotification)
                 if repeatNotification {
                     RepeatIntervalRow(repeatInterval: $repeatInterval)
-                    Text(intervalString(for: repeatInterval))
                 }
             }
         }
     }
 
-    // Helper for interval string
-    private func intervalString(for interval: TimeInterval) -> String {
-        switch interval {
-        case 900: return "15 min"
-        case 1800: return "30 min"
-        case 3600: return "1 hour"
-        case 7200: return "2 hours"
-        case 86400: return "1 day"
-        case 604800: return "1 week"
-        case 60: return "1 min"
-        default: return "Custom"
-        }
-    }
     private struct RepeatIntervalRow: View {
         @Binding var repeatInterval: TimeInterval
         var body: some View {
             HStack {
-                Text("Repeat every")
+                Text("Every:")
                 Spacer()
-                Picker("Interval", selection: $repeatInterval) {
+                Picker("", selection: $repeatInterval) {
                     Text("1 min").tag(60.0)
                     Text("15 min").tag(900.0)
                     Text("30 min").tag(1800.0)
                     Text("1 hour").tag(3600.0)
                     Text("2 hours").tag(7200.0)
-                    Text("1 day").tag(86400.0)
-                    Text("1 week").tag(604800.0)
+                    Text("day").tag(86400.0)
+                    Text("week").tag(604800.0)
+                    
                 }
-                .pickerStyle(MenuPickerStyle())
+                .pickerStyle(.menu)
             }
         }
     }
