@@ -140,11 +140,13 @@ struct ContentView: View {
                     selectedSection = sectionsQuery.first
                 }
                 syncCompletionStateFromWidget()
+                switchToSectionFromNotification()
             }
             .onChange(of: scenePhase) {
                 if scenePhase == .active {
                     syncCompletionStateFromWidget()
                     updateWidgetData()
+                    switchToSectionFromNotification()
                 }
             }
            // .navigationTitle("AnyTask")
@@ -753,6 +755,16 @@ struct ContentView: View {
     private func cancelNotification(for item: Item) {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [item.id.uuidString])
     }
+    
+    // MARK: - Notification Section Switch
+    private func switchToSectionFromNotification() {
+        if let sectionIDString = UserDefaults.standard.string(forKey: "SectionToShowOnLaunch"),
+           let sectionUUID = UUID(uuidString: sectionIDString),
+           let section = sectionsQuery.first(where: { $0.id == sectionUUID }) {
+            selectedSection = section
+            UserDefaults.standard.removeObject(forKey: "SectionToShowOnLaunch")
+        }
+    }
 }
 
 // MARK: - Preview
@@ -818,3 +830,5 @@ private func insertPreviewData(into context: ModelContext) {
         sampleItems4.forEach { context.insert($0) }
     }
 }
+
+

@@ -69,6 +69,7 @@ struct ItemEditSheet: View {
                                 Text("Repeat every")
                                 Spacer()
                                 Picker("Interval", selection: $repeatInterval) {
+                                    Text("1 min").tag(60.0)
                                     Text("15 min").tag(900.0)
                                     Text("30 min").tag(1800.0)
                                     Text("1 hour").tag(3600.0)
