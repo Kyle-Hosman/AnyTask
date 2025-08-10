@@ -1,5 +1,5 @@
 # AnyTask
-An intuitive task manager designed to simplify your daily workflow.
+An intuitive task manager.
 <p align="center">
   <img src="Images/App_Screenshot1.png" width="200" alt="Main View">
   &nbsp;&nbsp;
