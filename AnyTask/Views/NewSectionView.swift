@@ -1,10 +1,20 @@
 import SwiftUI
 
+class NewSectionViewModel: ObservableObject {
+    @Published var sectionName: String
+    @Published var selectedColor: String
+    @Published var selectedIcon: String
+    
+    init(sectionName: String = "", selectedColor: String = ".blue", selectedIcon: String = "folder") {
+        self.sectionName = sectionName
+        self.selectedColor = selectedColor
+        self.selectedIcon = selectedIcon
+    }
+}
+
 struct NewSectionView: View {
     @Environment(\.dismiss) private var dismiss
-    @State private var sectionName: String
-    @State private var selectedColor: String
-    @State private var selectedIcon: String
+    @StateObject private var viewModel: NewSectionViewModel
     @FocusState private var isTextFieldFocused: Bool
 
     let availableIcons = [
@@ -19,9 +29,7 @@ struct NewSectionView: View {
     ]
 
     init(initialName: String = "", initialColor: String = ".blue", initialIconName: String = "folder", onCreate: @escaping (String, String, String) -> Void) {
-        self._sectionName = State(initialValue: initialName)
-        self._selectedColor = State(initialValue: initialColor)
-        self._selectedIcon = State(initialValue: initialIconName)
+        _viewModel = StateObject(wrappedValue: NewSectionViewModel(sectionName: initialName, selectedColor: initialColor, selectedIcon: initialIconName))
         self.onCreate = onCreate
     }
 
@@ -29,7 +37,7 @@ struct NewSectionView: View {
         NavigationView {
             Form {
                 Section(header: Text("Name")) {
-                    TextField("Enter section name", text: $sectionName)
+                    TextField("Enter section name", text: $viewModel.sectionName)
                         .padding()
                         .background(Color(.systemGray6))
                         .cornerRadius(16)
@@ -45,49 +53,54 @@ struct NewSectionView: View {
                                 .frame(width: 50, height: 50)
                                 .overlay(
                                     Circle()
-                                        .stroke(selectedColor == colorName ? Color.primary : Color.clear, lineWidth: 2)
+                                        .stroke(viewModel.selectedColor == colorName ? Color.primary : Color.clear, lineWidth: 2)
                                 )
                                 .onTapGesture {
-                                    selectedColor = colorName
+                                    viewModel.selectedColor = colorName
                                 }
                         }
                     }
                     .padding()
                 }
                 Section(header: Text("Icon")) {
-                    iconPicker
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
+                        ForEach(availableIcons, id: \.self) { icon in
+                            Image(systemName: icon)
+                                .font(.title2)
+                                .padding()
+                                .background(viewModel.selectedIcon == icon ? Color.fromName(viewModel.selectedColor) : Color.clear)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(viewModel.selectedIcon == icon ? Color.primary : Color.clear, lineWidth: 2)
+                                )
+                                .foregroundColor(viewModel.selectedIcon == icon ? .black : .primary)
+                                .onTapGesture {
+                                    viewModel.selectedIcon = icon
+                                }
+                        }
+                    }
+                    .padding(.vertical)
                 }
             }
             .navigationTitle("New Section")
             .navigationBarItems(
                 leading: Button("Cancel", action: { dismiss() }),
                 trailing: Button("Done") {
-                    onCreate(sectionName, selectedColor, selectedIcon)
+                    onCreate(viewModel.sectionName, viewModel.selectedColor, viewModel.selectedIcon)
                     dismiss()
                 }
-                .disabled(sectionName.isEmpty)
+                .disabled(viewModel.sectionName.isEmpty)
             )
             .scrollDismissesKeyboard(.immediately)
             .ignoresSafeArea(.keyboard)
             .onAppear {
                 isTextFieldFocused = true
-            }
-        }
-    }
-
-    private var iconPicker: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 5), spacing: 16) {
-            ForEach(availableIcons, id: \.self) { icon in
-                Button(action: { selectedIcon = icon }) {
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .padding()
-                        .background(selectedIcon == icon ? Color.fromName(selectedColor) : Color.clear)
-                        .clipShape(Circle())
-                        .foregroundColor(Color.primary)
+                // Ensure selectedIcon is valid
+                if !availableIcons.contains(viewModel.selectedIcon) {
+                    viewModel.selectedIcon = availableIcons.first ?? "folder"
                 }
             }
         }
-        .padding(.vertical)
     }
 }
