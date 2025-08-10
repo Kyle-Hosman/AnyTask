@@ -10,11 +10,13 @@ struct TaskEntry: TimelineEntry {
     let taskIDs: [String]
     let taskTexts: [String]
     let completedIDs: Set<String>
+    let totalCount: Int
+    let completedCount: Int
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [])
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -35,7 +37,9 @@ struct Provider: TimelineProvider {
         let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
         let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
         let completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs)
+        let totalCount = (defaults?.array(forKey: "WidgetTaskIDs") as? [String])?.count ?? 0
+        let completedCount = completedIDs.count
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount)
     }
 }
 
@@ -62,6 +66,12 @@ struct AnyTaskWidgetEntryView: View {
                     .lineLimit(2)
                     .minimumScaleFactor(0.7) // Shrinks font size
                     .foregroundColor(Color.fromName(entry.sectionColorName).opacity(100))
+                    .padding(.top, 15)
+                Text("\(entry.completedCount)/\(entry.totalCount)")
+                    .font(.system(size: 18, weight: .bold))
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.7) // Shrinks font size
+                    .foregroundColor(Color.primary)
                     .padding(.top, 15)
             }
             .frame(width: 80) // Left-size width
@@ -136,5 +146,5 @@ struct AnyTaskWidget: Widget {
 #Preview(as: .systemSmall) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [])
+    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [], totalCount: 4, completedCount: 0)
 }

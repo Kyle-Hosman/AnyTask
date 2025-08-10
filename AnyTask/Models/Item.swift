@@ -21,8 +21,11 @@ final class Item: Identifiable {
     var dueDate: Date?
     var previousOrder: Int?
     var completedAt: Date?
+    // Repeat notification properties
+    var repeatNotification: Bool
+    var repeatInterval: TimeInterval?
 
-    init(taskText: String, taskComplete: Bool, timestamp: Date, order: Int, parentSection: TaskSection?, dueDate: Date? = nil, previousOrder: Int? = nil, completedAt: Date? = nil) {
+    init(taskText: String, taskComplete: Bool, timestamp: Date, order: Int, parentSection: TaskSection?, dueDate: Date? = nil, previousOrder: Int? = nil, completedAt: Date? = nil, repeatNotification: Bool = false, repeatInterval: TimeInterval? = nil) {
         self.id = UUID()
         self.taskText = taskText
         self.taskComplete = taskComplete
@@ -32,5 +35,7 @@ final class Item: Identifiable {
         self.dueDate = dueDate
         self.previousOrder = previousOrder
         self.completedAt = completedAt
+        self.repeatNotification = repeatNotification
+        self.repeatInterval = repeatInterval
     }
 }
