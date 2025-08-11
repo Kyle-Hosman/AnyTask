@@ -12,11 +12,12 @@ struct TaskEntry: TimelineEntry {
     let completedIDs: Set<String>
     let totalCount: Int
     let completedCount: Int
+    let refreshToken: UUID // Add a refresh token to force widget redraw
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0)
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID())
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -43,7 +44,8 @@ struct Provider: TimelineProvider {
         // --- End per-section completed IDs dictionary ---
         let totalCount = (defaults?.array(forKey: "WidgetTaskIDs") as? [String])?.count ?? 0
         let completedCount = completedIDs.count
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount)
+        print("[DEBUG] Provider.loadEntry: WidgetTaskIDs=\(taskIDs), WidgetTaskTexts=\(taskTexts), completedIDs=\(completedIDs)")
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID())
     }
 }
 
@@ -150,5 +152,5 @@ struct AnyTaskWidget: Widget {
 #Preview(as: .systemMedium) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [], totalCount: 4, completedCount: 0)
+    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [], totalCount: 4, completedCount: 0, refreshToken: UUID())
 }

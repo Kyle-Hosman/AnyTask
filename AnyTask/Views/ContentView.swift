@@ -40,25 +40,36 @@ struct ContentView: View {
     
     private func updateWidgetData() {
         guard let selectedSection = self.selectedSection else { return }
-        // Get ALL items in the section, not just incomplete
+        // Get ALL items in the section, ordered by 'order'
         let allItems = self.itemsQuery
             .filter { $0.parentSection == selectedSection }
             .sorted { $0.order < $1.order }
-        let taskIDs = allItems.map { $0.id.uuidString }
-        let taskTexts = allItems.map { $0.taskText }
-        let completedIDs = allItems.filter { $0.taskComplete }.map { $0.id.uuidString }
+        // Separate incomplete and complete items
+        let incomplete = allItems.filter { !$0.taskComplete }
+        let complete = allItems.filter { $0.taskComplete }
+        // Combine incomplete first, then complete
+        let widgetItems = incomplete + complete
+        let widgetTaskIDs = widgetItems.map { $0.id.uuidString }
+        let widgetTaskTexts = widgetItems.map { $0.taskText }
+        let completedIDs = complete.map { $0.id.uuidString }
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
         defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
         defaults?.set(selectedSection.iconName, forKey: "WidgetSectionIcon")
-        defaults?.set(taskIDs, forKey: "WidgetTaskIDs")
-        defaults?.set(taskTexts, forKey: "WidgetTaskTexts")
+        defaults?.set(widgetTaskIDs, forKey: "WidgetTaskIDs")
+        defaults?.set(widgetTaskTexts, forKey: "WidgetTaskTexts")
         // --- Begin per-section completed IDs dictionary ---
         var completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
         completedDict[selectedSection.id.uuidString] = completedIDs
         defaults?.set(completedDict, forKey: "WidgetCompletedTaskIDsDict")
         // --- End per-section completed IDs dictionary ---
         defaults?.set(selectedSection.id.uuidString, forKey: "WidgetSectionID")
+        // --- Store the full, ordered list for the section ---
+        let allTaskIDs = allItems.map { $0.id.uuidString }
+        let allTaskTexts = allItems.map { $0.taskText }
+        defaults?.set(allTaskIDs, forKey: "AllSectionTaskIDs_\(selectedSection.id.uuidString)")
+        defaults?.set(allTaskTexts, forKey: "AllSectionTaskTexts_\(selectedSection.id.uuidString)")
+        // --- End full list ---
         WidgetCenter.shared.reloadAllTimelines()
     }
     
