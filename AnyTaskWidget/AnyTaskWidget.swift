@@ -35,16 +35,19 @@ struct Provider: TimelineProvider {
         let sectionName = defaults?.string(forKey: "WidgetSectionName") ?? "No List"
         let sectionColorName = defaults?.string(forKey: "WidgetSectionColor") ?? ".gray"
         let sectionIconName = defaults?.string(forKey: "WidgetSectionIcon") ?? "folder"
+        let sectionID = defaults?.string(forKey: "WidgetSectionID") ?? ""
+        // Use the full list for counts
+        let allTaskIDs = defaults?.stringArray(forKey: "AllSectionTaskIDs_\(sectionID)") ?? []
+        // Use the display list for the first 3
         let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
         let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
         // --- Begin per-section completed IDs dictionary ---
-        let sectionID = defaults?.string(forKey: "WidgetSectionID") ?? ""
         let completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
         let completedIDs = Set(completedDict[sectionID] ?? [])
         // --- End per-section completed IDs dictionary ---
-        let totalCount = (defaults?.array(forKey: "WidgetTaskIDs") as? [String])?.count ?? 0
-        let completedCount = completedIDs.count
-        print("[DEBUG] Provider.loadEntry: WidgetTaskIDs=\(taskIDs), WidgetTaskTexts=\(taskTexts), completedIDs=\(completedIDs)")
+        let totalCount = allTaskIDs.count
+        let completedCount = allTaskIDs.filter { completedIDs.contains($0) }.count
+        print("[DEBUG] Provider.loadEntry: WidgetTaskIDs=\(taskIDs), WidgetTaskTexts=\(taskTexts), completedIDs=\(completedIDs), allTaskIDs=\(allTaskIDs)")
         return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID())
     }
 }
