@@ -40,27 +40,36 @@ struct ContentView: View {
     
     private func updateWidgetData() {
         guard let selectedSection = self.selectedSection else { return }
-        let incompleteItems = self.itemsQuery
-            .filter { $0.parentSection == selectedSection && !$0.taskComplete }
+        // Get ALL items in the section, not just incomplete
+        let allItems = self.itemsQuery
+            .filter { $0.parentSection == selectedSection }
             .sorted { $0.order < $1.order }
-        let taskIDs = incompleteItems.map { $0.id.uuidString }
-        let taskTexts = incompleteItems.map { $0.taskText }
-        let completedIDs = self.itemsQuery
-            .filter { $0.parentSection == selectedSection && $0.taskComplete }
-            .map { $0.id.uuidString }
+        let taskIDs = allItems.map { $0.id.uuidString }
+        let taskTexts = allItems.map { $0.taskText }
+        let completedIDs = allItems.filter { $0.taskComplete }.map { $0.id.uuidString }
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
         defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
         defaults?.set(selectedSection.iconName, forKey: "WidgetSectionIcon")
         defaults?.set(taskIDs, forKey: "WidgetTaskIDs")
         defaults?.set(taskTexts, forKey: "WidgetTaskTexts")
-        defaults?.set(completedIDs, forKey: "WidgetCompletedTaskIDs")
+        // --- Begin per-section completed IDs dictionary ---
+        var completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
+        completedDict[selectedSection.id.uuidString] = completedIDs
+        defaults?.set(completedDict, forKey: "WidgetCompletedTaskIDsDict")
+        // --- End per-section completed IDs dictionary ---
+        defaults?.set(selectedSection.id.uuidString, forKey: "WidgetSectionID")
         WidgetCenter.shared.reloadAllTimelines()
     }
     
     private func syncCompletionStateFromWidget() {
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
-        let completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
+        let sectionID = selectedSection?.id.uuidString ?? ""
+        // Only sync if the widget actually updated this section
+        let widgetDidUpdateSectionID = defaults?.string(forKey: "WidgetDidUpdateSectionID")
+        guard widgetDidUpdateSectionID == sectionID else { return }
+        let completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
+        let completedIDs = Set(completedDict[sectionID] ?? [])
         for item in itemsQuery {
             let shouldBeComplete = completedIDs.contains(item.id.uuidString)
             if item.taskComplete != shouldBeComplete {
@@ -73,6 +82,8 @@ struct ContentView: View {
             }
         }
         try? modelContext.save()
+        // Clear the flag after syncing
+        defaults?.removeObject(forKey: "WidgetDidUpdateSectionID")
     }
     
 
@@ -830,5 +841,3 @@ private func insertPreviewData(into context: ModelContext) {
         sampleItems4.forEach { context.insert($0) }
     }
 }
-
-

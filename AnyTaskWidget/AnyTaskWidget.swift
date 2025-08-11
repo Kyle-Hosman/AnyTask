@@ -36,7 +36,11 @@ struct Provider: TimelineProvider {
         let sectionIconName = defaults?.string(forKey: "WidgetSectionIcon") ?? "folder"
         let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
         let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
-        let completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
+        // --- Begin per-section completed IDs dictionary ---
+        let sectionID = defaults?.string(forKey: "WidgetSectionID") ?? ""
+        let completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
+        let completedIDs = Set(completedDict[sectionID] ?? [])
+        // --- End per-section completed IDs dictionary ---
         let totalCount = (defaults?.array(forKey: "WidgetTaskIDs") as? [String])?.count ?? 0
         let completedCount = completedIDs.count
         return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount)
