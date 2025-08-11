@@ -18,13 +18,22 @@ public struct CompleteTaskIntent: AppIntent {
 
     public func perform() async throws -> some IntentResult {
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
-        var completedIDs = Set(defaults?.stringArray(forKey: "WidgetCompletedTaskIDs") ?? [])
+        // Get the current section ID
+        guard let sectionID = defaults?.string(forKey: "WidgetSectionID") else {
+            return .result()
+        }
+        // Read the per-section completed IDs dictionary
+        var completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
+        var completedIDs = Set(completedDict[sectionID] ?? [])
         if completedIDs.contains(taskID) {
             completedIDs.remove(taskID)
         } else {
             completedIDs.insert(taskID)
         }
-        defaults?.set(Array(completedIDs), forKey: "WidgetCompletedTaskIDs")
+        completedDict[sectionID] = Array(completedIDs)
+        defaults?.set(completedDict, forKey: "WidgetCompletedTaskIDsDict")
+        // Set the update flag so the app knows to sync
+        defaults?.set(sectionID, forKey: "WidgetDidUpdateSectionID")
         WidgetCenter.shared.reloadAllTimelines()
         return .result()
     }

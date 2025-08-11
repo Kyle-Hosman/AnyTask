@@ -71,9 +71,16 @@
 		27CB69B92E2EC96B00DE7721 /* Exceptions for "AnyTask" folder in "AnyTaskWidgetExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				AnyTaskAppIntent.swift,
+				AppIntent.swift,
 			);
 			target = 275D7E202E2EB6B10098E17A /* AnyTaskWidgetExtension */;
+		};
+		27F1D3A32E4A499E00ABD193 /* Exceptions for "AnyTask" folder in "AnyTask" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 27D96F632DC0520300259D9D /* AnyTask */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -89,6 +96,7 @@
 		27D96F662DC0520300259D9D /* AnyTask */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
+				27F1D3A32E4A499E00ABD193 /* Exceptions for "AnyTask" folder in "AnyTask" target */,
 				27CB69B92E2EC96B00DE7721 /* Exceptions for "AnyTask" folder in "AnyTaskWidgetExtension" target */,
 			);
 			path = AnyTask;
@@ -152,10 +160,10 @@
 		27D96F5B2DC0520300259D9D = {
 			isa = PBXGroup;
 			children = (
-				27CB69B42E2EBEDA00DE7721 /* AnyTaskWidgetExtension.entitlements */,
 				27D96F662DC0520300259D9D /* AnyTask */,
 				27D96F792DC0520400259D9D /* AnyTaskTests */,
 				27D96F832DC0520400259D9D /* AnyTaskUITests */,
+				27CB69B42E2EBEDA00DE7721 /* AnyTaskWidgetExtension.entitlements */,
 				275D7E272E2EB6B10098E17A /* AnyTaskWidget */,
 				275D7E222E2EB6B10098E17A /* Frameworks */,
 				27D96F652DC0520300259D9D /* Products */,
@@ -588,6 +596,7 @@
 				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AnyTask/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = AnyTask;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -620,6 +629,7 @@
 				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = AnyTask/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = AnyTask;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;

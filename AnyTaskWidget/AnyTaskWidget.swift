@@ -147,7 +147,7 @@ struct AnyTaskWidget: Widget {
     }
 }
 
-#Preview(as: .systemSmall) {
+#Preview(as: .systemMedium) {
     AnyTaskWidget()
 } timeline: {
     TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4"], completedIDs: [], totalCount: 4, completedCount: 0)
