@@ -175,7 +175,16 @@ struct ContentView: View {
             .onChange(of: scenePhase) {
                 if scenePhase == .active {
                     syncCompletionStateFromWidget()
-                    updateWidgetData()
+                    // --- Listen for WidgetDidSwitchSectionID ---
+                    let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+                    if let switchedSectionID = defaults?.string(forKey: "WidgetDidSwitchSectionID"),
+                       let newSection = sectionsQuery.first(where: { $0.id.uuidString == switchedSectionID }) {
+                        selectedSection = newSection
+                        updateWidgetData()
+                        defaults?.removeObject(forKey: "WidgetDidSwitchSectionID")
+                    } else {
+                        updateWidgetData()
+                    }
                     switchToSectionFromNotification()
                 }
             }

@@ -163,9 +163,12 @@ struct AnyTaskWidgetEntryView: View {
                 // Section Switcher Row
                 HStack(spacing: 12) {
                     ForEach(entry.availableSections, id: \ .id) { section in
-                        Button(action: {
-                            // TODO: Trigger AppIntent to switch section
-                        }) {
+                        Button(intent: SwitchSectionIntent(
+                            sectionID: section.id,
+                            sectionName: section.id, // You may want to pass the actual name if available
+                            sectionColorName: section.colorName,
+                            sectionIconName: section.iconName
+                        )) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(Color.fromName(section.colorName))
@@ -179,8 +182,6 @@ struct AnyTaskWidgetEntryView: View {
                     }
                 }
                 .padding(.top, 8)
-                .frame(width: 80) // Left-size width
-                .padding(.trailing, 12)
                 // Bottom Part
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \ .0) { (id, text) in

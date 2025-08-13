@@ -68,3 +68,53 @@ public struct CompleteTaskIntent: AppIntent {
         return .result()
     }
 }
+
+@available(iOS 17.0, *)
+public struct SwitchSectionIntent: AppIntent {
+    public static var title: LocalizedStringResource = "Switch Section"
+    @Parameter(title: "Section ID") public var sectionID: String
+    @Parameter(title: "Section Name") public var sectionName: String
+    @Parameter(title: "Section Color Name") public var sectionColorName: String
+    @Parameter(title: "Section Icon Name") public var sectionIconName: String
+
+    public init() {
+        self.sectionID = ""
+        self.sectionName = ""
+        self.sectionColorName = ""
+        self.sectionIconName = ""
+    }
+    public init(sectionID: String, sectionName: String, sectionColorName: String, sectionIconName: String) {
+        self.sectionID = sectionID
+        self.sectionName = sectionName
+        self.sectionColorName = sectionColorName
+        self.sectionIconName = sectionIconName
+    }
+
+    public func perform() async throws -> some IntentResult {
+        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+        defaults?.set(sectionID, forKey: "WidgetSectionID")
+        defaults?.set(sectionName, forKey: "WidgetSectionName")
+        defaults?.set(sectionColorName, forKey: "WidgetSectionColor")
+        defaults?.set(sectionIconName, forKey: "WidgetSectionIcon")
+        defaults?.set(sectionID, forKey: "WidgetDidSwitchSectionID") // Set flag for app to update task list
+        // --- Instantly sync list items for the new section ---
+        let allTaskIDs = defaults?.stringArray(forKey: "AllSectionTaskIDs_\(sectionID)") ?? []
+        let allTaskTexts = defaults?.stringArray(forKey: "AllSectionTaskTexts_\(sectionID)") ?? []
+        let completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
+        let completedIDs = Set(completedDict[sectionID] ?? [])
+        let incompleteIDs = allTaskIDs.filter { !completedIDs.contains($0) }
+        let completeIDs = allTaskIDs.filter { completedIDs.contains($0) }
+        let newWidgetTaskIDs = Array((incompleteIDs + completeIDs).prefix(3))
+        let newWidgetTaskTexts = newWidgetTaskIDs.compactMap { id in
+            if let idx = allTaskIDs.firstIndex(of: id) {
+                return allTaskTexts[idx]
+            }
+            return nil
+        }
+        defaults?.set(newWidgetTaskIDs, forKey: "WidgetTaskIDs")
+        defaults?.set(newWidgetTaskTexts, forKey: "WidgetTaskTexts")
+        defaults?.synchronize()
+        WidgetCenter.shared.reloadTimelines(ofKind: "AnyTaskWidget")
+        return .result()
+    }
+}
