@@ -40,7 +40,7 @@ struct Provider: TimelineProvider {
         let sectionID = defaults?.string(forKey: "WidgetSectionID") ?? ""
         // Use the full list for counts
         let allTaskIDs = defaults?.stringArray(forKey: "AllSectionTaskIDs_\(sectionID)") ?? []
-        // Use the display list for the first 3
+        // Use the display list for the first 6 (for large widget)
         let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
         let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
         // --- Begin per-section completed IDs dictionary ---
@@ -55,7 +55,7 @@ struct Provider: TimelineProvider {
         let availableSectionsData = defaults?.data(forKey: "AvailableSections") ?? Data()
         let availableSections = (try? JSONDecoder().decode([SectionButtonInfo].self, from: availableSectionsData)) ?? []
         
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, sectionID: sectionID, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID(), availableSections: availableSections)
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, sectionID: sectionID, taskIDs: Array(taskIDs.prefix(6)), taskTexts: Array(taskTexts.prefix(6)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID(), availableSections: availableSections)
     }
 }
 
@@ -160,7 +160,7 @@ struct AnyTaskWidgetEntryView: View {
         }
         //MARK: Large Widget Layout
         if family == .systemLarge {
-            VStack(alignment: .center, spacing: 8) {
+            VStack(spacing: 0) { // Set spacing to 0 for tight layout
                 // Section Switcher Row
                 HStack(spacing: 12) {
                     ForEach(entry.availableSections, id: \ .id) { section in
@@ -203,9 +203,9 @@ struct AnyTaskWidgetEntryView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.top, 8)
+                .padding(.bottom, 8)
                 // Bottom Part
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) { // Slight spacing for readability
                     ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \ .0) { (id, text) in
                         HStack(spacing: 8) {
                             Button(intent: CompleteTaskIntent(taskID: id)) {
@@ -232,6 +232,7 @@ struct AnyTaskWidgetEntryView: View {
                         .cornerRadius(12)
                     }
                 }
+                // Remove extra padding below
             }
             .containerBackground(for: .widget) { Color(.systemBackground) }
         }

@@ -53,7 +53,7 @@ public struct CompleteTaskIntent: AppIntent {
             let updatedCompletedIDs = Set(completedDict[sectionID] ?? [])
             let incompleteIDs = allTaskIDs.filter { !updatedCompletedIDs.contains($0) }
             let completeIDs = allTaskIDs.filter { updatedCompletedIDs.contains($0) }
-            let newWidgetTaskIDs = Array((incompleteIDs + completeIDs).prefix(3))
+            let newWidgetTaskIDs = Array((incompleteIDs + completeIDs).prefix(6))
             let newWidgetTaskTexts = newWidgetTaskIDs.compactMap { id in
                 if let idx = allTaskIDs.firstIndex(of: id) {
                     return allTaskTexts[idx]
@@ -104,7 +104,7 @@ public struct SwitchSectionIntent: AppIntent {
         let completedIDs = Set(completedDict[sectionID] ?? [])
         let incompleteIDs = allTaskIDs.filter { !completedIDs.contains($0) }
         let completeIDs = allTaskIDs.filter { completedIDs.contains($0) }
-        let newWidgetTaskIDs = Array((incompleteIDs + completeIDs).prefix(3))
+        let newWidgetTaskIDs = Array((incompleteIDs + completeIDs).prefix(6))
         let newWidgetTaskTexts = newWidgetTaskIDs.compactMap { id in
             if let idx = allTaskIDs.firstIndex(of: id) {
                 return allTaskTexts[idx]
