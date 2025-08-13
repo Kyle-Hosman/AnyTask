@@ -83,6 +83,7 @@ struct AnyTaskWidgetEntryView: View {
                                     }
                                 }
                             }
+                            .buttonStyle(.borderless)
                             Text(text)
                                 .font(.subheadline)
                                 .lineLimit(1)
@@ -90,7 +91,8 @@ struct AnyTaskWidgetEntryView: View {
                                 .padding(.leading, 2)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(2)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
                         .background(Color.fromName(entry.sectionColorName))
                         .cornerRadius(12)
                     }
@@ -143,6 +145,7 @@ struct AnyTaskWidgetEntryView: View {
                                     }
                                 }
                             }
+                            .buttonStyle(.borderless)
                             Text(text)
                                 .font(.subheadline)
                                 .lineLimit(1)
@@ -150,7 +153,8 @@ struct AnyTaskWidgetEntryView: View {
                                 .padding(.leading, 2)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(2)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
                         .background(Color.fromName(entry.sectionColorName))
                         .cornerRadius(12)
                     }
@@ -220,6 +224,7 @@ struct AnyTaskWidgetEntryView: View {
                                     }
                                 }
                             }
+                            .buttonStyle(.borderless)
                             Text(text)
                                 .font(.subheadline)
                                 .lineLimit(1)
@@ -227,7 +232,8 @@ struct AnyTaskWidgetEntryView: View {
                                 .padding(.leading, 2)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(2)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
                         .background(Color.fromName(entry.sectionColorName))
                         .cornerRadius(12)
                     }

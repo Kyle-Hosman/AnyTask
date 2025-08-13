@@ -304,7 +304,7 @@ struct ContentView: View {
                                 .fill(selectedSection?.id == anySection.id ? Color.fromName(anySection.colorName) : Color.clear)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.fromName(anySection.colorName), lineWidth: 2)
+                                        .stroke(Color.fromName(anySection.colorName), lineWidth: 3)
                                 )
                         )
                         .foregroundColor(Color.primary)
@@ -349,7 +349,7 @@ struct ContentView: View {
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                        .stroke(Color.fromName(section.colorName), lineWidth: 3)
                                 )
                         )
                         .foregroundColor(Color.primary)
