@@ -189,9 +189,15 @@ struct AnyTaskWidgetEntryView: View {
                                                 .stroke(Color.fromName(section.colorName), lineWidth: 3)
                                         )
                                 }
-                                Image(systemName: section.iconName)
-                                    .font(.headline)
-                                    .foregroundColor(Color.primary)
+                                if section.iconName == "questionmark" && (section.colorName == ".gray" || section.id == entry.availableSections.first?.id) {
+                                    Text("A")
+                                        .font(.headline)
+                                        .foregroundColor(Color.primary)
+                                } else {
+                                    Image(systemName: section.iconName)
+                                        .font(.headline)
+                                        .foregroundColor(Color.primary)
+                                }
                             }
                         }
                         .buttonStyle(.plain)
