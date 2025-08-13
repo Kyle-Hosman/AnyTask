@@ -858,9 +858,9 @@ private func insertPreviewData(into context: ModelContext) {
         let sampleItems5 = [
             Item(taskText: "Idea 1", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection4),
             Item(taskText: "Idea 2", taskComplete: false, timestamp: Date().addingTimeInterval(-3600), order: 1, parentSection: sampleSection4),
-            Item(taskText: "Idea 3", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 2, parentSection: sampleSection4),
+            Item(taskText: "Idea 3", taskComplete: false, timestamp: Date().addingTimeInterval(-7200), order: 2, parentSection: sampleSection4),
             Item(taskText: "Idea 4", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 3, parentSection: sampleSection4)
         ]
-        sampleItems4.forEach { context.insert($0) }
+        sampleItems5.forEach { context.insert($0) }
     }
 }
