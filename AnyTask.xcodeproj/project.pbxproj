@@ -10,6 +10,8 @@
 		275D7E242E2EB6B10098E17A /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 275D7E232E2EB6B10098E17A /* WidgetKit.framework */; };
 		275D7E262E2EB6B10098E17A /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 275D7E252E2EB6B10098E17A /* SwiftUI.framework */; };
 		275D7E372E2EB6B30098E17A /* AnyTaskWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 275D7E212E2EB6B10098E17A /* AnyTaskWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		27960A1B2E4D03D800248B59 /* SectionButtonInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27960A192E4D03D800248B59 /* SectionButtonInfo.swift */; };
+		27960A1C2E4D03D800248B59 /* SectionButtonInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27960A192E4D03D800248B59 /* SectionButtonInfo.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +56,7 @@
 		275D7E212E2EB6B10098E17A /* AnyTaskWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = AnyTaskWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		275D7E232E2EB6B10098E17A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		275D7E252E2EB6B10098E17A /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		27960A192E4D03D800248B59 /* SectionButtonInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionButtonInfo.swift; sourceTree = "<group>"; };
 		27CB69B42E2EBEDA00DE7721 /* AnyTaskWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnyTaskWidgetExtension.entitlements; sourceTree = "<group>"; };
 		27D96F642DC0520300259D9D /* AnyTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AnyTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		27D96F762DC0520400259D9D /* AnyTaskTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnyTaskTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -151,10 +154,19 @@
 		275D7E222E2EB6B10098E17A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				27960A1A2E4D03D800248B59 /* Models */,
 				275D7E232E2EB6B10098E17A /* WidgetKit.framework */,
 				275D7E252E2EB6B10098E17A /* SwiftUI.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		27960A1A2E4D03D800248B59 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				27960A192E4D03D800248B59 /* SectionButtonInfo.swift */,
+			);
+			path = Models;
 			sourceTree = "<group>";
 		};
 		27D96F5B2DC0520300259D9D = {
@@ -284,7 +296,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					275D7E202E2EB6B10098E17A = {
 						CreatedOnToolsVersion = 16.2;
@@ -360,6 +372,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27960A1B2E4D03D800248B59 /* SectionButtonInfo.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,6 +380,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				27960A1C2E4D03D800248B59 /* SectionButtonInfo.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -414,7 +428,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnyTaskWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = AnyTaskWidget;
@@ -444,7 +457,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnyTaskWidget/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = AnyTaskWidget;
@@ -500,6 +512,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -563,6 +576,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -593,7 +607,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AnyTask/Preview Content\"";
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnyTask/Info.plist;
@@ -626,7 +639,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"AnyTask/Preview Content\"";
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnyTask/Info.plist;
@@ -656,7 +668,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -675,7 +686,6 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MARKETING_VERSION = 1.0;
@@ -693,7 +703,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kylehosman.AnyTaskUITests;
@@ -710,7 +719,6 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.kylehosman.AnyTaskUITests;

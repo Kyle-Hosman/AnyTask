@@ -13,11 +13,12 @@ struct TaskEntry: TimelineEntry {
     let totalCount: Int
     let completedCount: Int
     let refreshToken: UUID // Add a refresh token to force widget redraw
+    let availableSections: [SectionButtonInfo] // New property for section buttons
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID())
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID(), availableSections: [])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -48,7 +49,12 @@ struct Provider: TimelineProvider {
         let totalCount = allTaskIDs.count
         let completedCount = allTaskIDs.filter { completedIDs.contains($0) }.count
         print("[DEBUG] Provider.loadEntry: WidgetTaskIDs=\(taskIDs), WidgetTaskTexts=\(taskTexts), completedIDs=\(completedIDs), allTaskIDs=\(allTaskIDs)")
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID())
+        
+        // Load available sections for buttons
+        let availableSectionsData = defaults?.data(forKey: "AvailableSections") ?? Data()
+        let availableSections = (try? JSONDecoder().decode([SectionButtonInfo].self, from: availableSectionsData)) ?? []
+        
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID(), availableSections: availableSections)
     }
 }
 
@@ -153,38 +159,31 @@ struct AnyTaskWidgetEntryView: View {
         }
         //MARK: Large Widget Layout
         if family == .systemLarge {
-                // Top Part
             VStack(alignment: .center, spacing: 8) {
-                VStack(alignment: .center, spacing: 0) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color.fromName(entry.sectionColorName))
-                            .frame(width: 40, height: 40)
-                        Image(systemName: entry.sectionIconName)
-                            .font(.headline)
-                            .foregroundColor(Color.primary)
+                // Section Switcher Row
+                HStack(spacing: 12) {
+                    ForEach(entry.availableSections, id: \ .id) { section in
+                        Button(action: {
+                            // TODO: Trigger AppIntent to switch section
+                        }) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.fromName(section.colorName))
+                                    .frame(width: 40, height: 40)
+                                Image(systemName: section.iconName)
+                                    .font(.headline)
+                                    .foregroundColor(Color.primary)
+                            }
+                        }
+                        .buttonStyle(.plain)
                     }
-                    Text(entry.sectionName)
-                        .font(.system(size: 18, weight: .bold))
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.7) // Shrinks font size
-                        .foregroundColor(Color.fromName(entry.sectionColorName).opacity(100))
-                        .padding(.top, 15)
-                    //                    Text("\(entry.completedCount)/\(entry.totalCount)")
-                    //                        .font(.system(size: 18, weight: .bold))
-                    //                        .lineLimit(2)
-                    //                        .minimumScaleFactor(0.7) // Shrinks font size
-                    //                        .foregroundColor(Color.primary)
-                    //                        .padding(.top, 15)
                 }
+                .padding(.top, 8)
                 .frame(width: 80) // Left-size width
                 .padding(.trailing, 12)
-                
-                
                 // Bottom Part
                 VStack(alignment: .leading, spacing: 8) {
-                    
-                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \ .0) { (id, text) in
                         HStack(spacing: 8) {
                             Button(intent: CompleteTaskIntent(taskID: id)) {
                                 ZStack {
@@ -211,8 +210,7 @@ struct AnyTaskWidgetEntryView: View {
                     }
                 }
             }
-                .containerBackground(for: .widget) { Color(.systemBackground) }
-            
+            .containerBackground(for: .widget) { Color(.systemBackground) }
         }
         
     }
@@ -250,5 +248,22 @@ struct AnyTaskWidget: Widget {
 #Preview(as: .systemLarge) {
     AnyTaskWidget()
 } timeline: {
-    TaskEntry(date: .now, sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2", "3", "4"], taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4", "Sample Task 5", "Sample Task 6"], completedIDs: [], totalCount: 6, completedCount: 0, refreshToken: UUID())
+    TaskEntry(
+        date: .now,
+        sectionName: "To-Do",
+        sectionColorName: ".green",
+        sectionIconName: "pencil",
+        taskIDs: ["1", "2", "3", "4"],
+        taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4", "Sample Task 5", "Sample Task 6"],
+        completedIDs: [],
+        totalCount: 6,
+        completedCount: 0,
+        refreshToken: UUID(),
+        availableSections: [
+            SectionButtonInfo(id: "todo", colorName: ".green", iconName: "pencil"),
+            SectionButtonInfo(id: "reminders", colorName: ".red", iconName: "flag"),
+            SectionButtonInfo(id: "shopping", colorName: ".blue", iconName: "cart"),
+            SectionButtonInfo(id: "ideas", colorName: ".yellow", iconName: "star")
+        ]
+    )
 }

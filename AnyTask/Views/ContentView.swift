@@ -70,6 +70,14 @@ struct ContentView: View {
         defaults?.set(allTaskIDs, forKey: "AllSectionTaskIDs_\(selectedSection.id.uuidString)")
         defaults?.set(allTaskTexts, forKey: "AllSectionTaskTexts_\(selectedSection.id.uuidString)")
         // --- End full list ---
+        // --- Store available sections for widget section switcher ---
+        let sectionButtonInfo = sections.map { section in
+            SectionButtonInfo(id: section.id.uuidString, colorName: section.colorName, iconName: section.iconName)
+        }
+        if let encoded = try? JSONEncoder().encode(sectionButtonInfo) {
+            defaults?.set(encoded, forKey: "AvailableSections")
+        }
+        // --- End available sections ---
         WidgetCenter.shared.reloadAllTimelines()
     }
     
