@@ -234,6 +234,7 @@ struct AnyTaskWidgetEntryView: View {
                 }
                 // Remove extra padding below
             }
+            .frame(maxHeight: .infinity, alignment: .top) // Ensure button bar is always at the top
             .containerBackground(for: .widget) { Color(.systemBackground) }
         }
         
