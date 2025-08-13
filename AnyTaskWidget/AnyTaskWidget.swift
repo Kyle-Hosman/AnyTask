@@ -7,18 +7,19 @@ struct TaskEntry: TimelineEntry {
     let sectionName: String
     let sectionColorName: String
     let sectionIconName: String
+    let sectionID: String // <-- Add this line
     let taskIDs: [String]
     let taskTexts: [String]
     let completedIDs: Set<String>
     let totalCount: Int
     let completedCount: Int
-    let refreshToken: UUID // Add a refresh token to force widget redraw
-    let availableSections: [SectionButtonInfo] // New property for section buttons
+    let refreshToken: UUID
+    let availableSections: [SectionButtonInfo]
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID(), availableSections: [])
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", sectionID: "todo", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID(), availableSections: [])
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -54,7 +55,7 @@ struct Provider: TimelineProvider {
         let availableSectionsData = defaults?.data(forKey: "AvailableSections") ?? Data()
         let availableSections = (try? JSONDecoder().decode([SectionButtonInfo].self, from: availableSectionsData)) ?? []
         
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID(), availableSections: availableSections)
+        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, sectionID: sectionID, taskIDs: Array(taskIDs.prefix(3)), taskTexts: Array(taskTexts.prefix(3)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID(), availableSections: availableSections)
     }
 }
 
@@ -163,6 +164,7 @@ struct AnyTaskWidgetEntryView: View {
                 // Section Switcher Row
                 HStack(spacing: 12) {
                     ForEach(entry.availableSections, id: \ .id) { section in
+                        let isSelected = section.id == entry.sectionID
                         Button(intent: SwitchSectionIntent(
                             sectionID: section.id,
                             sectionName: section.id, // You may want to pass the actual name if available
@@ -170,9 +172,23 @@ struct AnyTaskWidgetEntryView: View {
                             sectionIconName: section.iconName
                         )) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.fromName(section.colorName))
-                                    .frame(width: 40, height: 40)
+                                if isSelected {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.fromName(section.colorName))
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.fromName(section.colorName), lineWidth: 3)
+                                        )
+                                } else {
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color.clear)
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.fromName(section.colorName), lineWidth: 3)
+                                        )
+                                }
                                 Image(systemName: section.iconName)
                                     .font(.headline)
                                     .foregroundColor(Color.primary)
@@ -253,7 +269,7 @@ struct AnyTaskWidget: Widget {
         date: .now,
         sectionName: "To-Do",
         sectionColorName: ".green",
-        sectionIconName: "pencil",
+        sectionIconName: "pencil", sectionID: "todo",
         taskIDs: ["1", "2", "3", "4"],
         taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4", "Sample Task 5", "Sample Task 6"],
         completedIDs: [],
