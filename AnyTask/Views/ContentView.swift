@@ -294,68 +294,70 @@ struct ContentView: View {
                         .font(.headline)
                 }
                 .padding(.horizontal)
-                .padding(.bottom, 6)
+                .padding(.bottom, 8)
             }
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    ForEach(sections.filter { $0.name != "Any" }) { section in
-                        Button(action: {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 60, maximum: 210), spacing: 8), count: 3), spacing: 8) {
+                ForEach(sections.filter { $0.name != "Any" }) { section in
+                    Button(action: {
+                        isInputFieldFocused = false
+                        if editModeState == .active && selectedSection?.name == "Any" {
+                            if section.id != selectedSection?.id {
+                                pendingSection = section
+                            }
+                        } else {
                             isInputFieldFocused = false
-                            if editModeState == .active && selectedSection?.name == "Any" {
-                                if section.id != selectedSection?.id {
-                                    pendingSection = section
-                                }
-                            } else {
-                                isInputFieldFocused = false
-                                selectSection(section)
-                                pendingSection = nil
-                            }
-                            updateWidgetData()
-                        }) {
-                            HStack(spacing: 6) {
-                                Image(systemName: section.iconName)
-                                    .font(.headline)
-                                    .foregroundColor(Color.primary)
-                                Text(section.name)
-                            }
-                            .padding(10)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(
-                                        (editModeState == .active && selectedSection?.name == "Any" && section.id == pendingSection?.id)
-                                        ? Color.fromName(section.colorName)
-                                        : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
-                                    )
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .stroke(Color.fromName(section.colorName), lineWidth: 2)
-                                    )
-                            )
-                            .foregroundColor(Color.primary)
-                            .opacity(
-                                (editModeState == .active && selectedSection?.name == "Any" && section.id != selectedSection?.id)
-                                ? 0.7 : 1.0
-                            )
+                            selectSection(section)
+                            pendingSection = nil
                         }
-                        .contextMenu {
-                            if section.isEditable {
-                                Button("Edit Section") {
-                                    sectionToEdit = section
-                                    isShowingEditSectionSheet = true
-                                }
-                                Button("Delete Section", role: .destructive) {
-                                    sectionToDelete = section
-                                    isShowingDeleteConfirmation = true
-                                }
-                            } else {
-                                Text("This section cannot be edited or deleted")
+                        updateWidgetData()
+                    }) {
+                        HStack(spacing: 0) {
+                            Image(systemName: section.iconName)
+                                .font(.headline)
+                                .foregroundColor(Color.primary)
+                            Text(section.name)
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity, maxHeight: 40)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(
+                                    (editModeState == .active && selectedSection?.name == "Any" && section.id == pendingSection?.id)
+                                    ? Color.fromName(section.colorName)
+                                    : (selectedSection?.id == section.id ? Color.fromName(section.colorName) : Color.clear)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color.fromName(section.colorName), lineWidth: 2)
+                                )
+                        )
+                        .foregroundColor(Color.primary)
+                        .opacity(
+                            (editModeState == .active && selectedSection?.name == "Any" && section.id != selectedSection?.id)
+                            ? 0.7 : 1.0
+                        )
+                    }
+                    .contextMenu {
+                        if section.isEditable {
+                            Button("Edit Section") {
+                                sectionToEdit = section
+                                isShowingEditSectionSheet = true
                             }
+                            Button("Delete Section", role: .destructive) {
+                                sectionToDelete = section
+                                isShowingDeleteConfirmation = true
+                            }
+                        } else {
+                            Text("This section cannot be edited or deleted")
                         }
                     }
                 }
-                .padding(.horizontal)
             }
+            .padding(.horizontal)
             .padding(.top, 0)
         }
         .padding(.top)
@@ -393,8 +395,8 @@ struct ContentView: View {
             }
         }
         .padding(. horizontal, 26)
-        .padding(.vertical, 10)
-        .padding(.bottom, 10)
+        //.padding(.vertical, 8)
+        .padding(.bottom, 8)
     }
     
     // MARK: - Task List
@@ -848,6 +850,16 @@ private func insertPreviewData(into context: ModelContext) {
             Item(taskText: "Milk", taskComplete: false, timestamp: Date().addingTimeInterval(-3600), order: 1, parentSection: sampleSection4),
             Item(taskText: "Tomatoes", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 2, parentSection: sampleSection4),
             Item(taskText: "Potatoes", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 3, parentSection: sampleSection4)
+        ]
+        sampleItems4.forEach { context.insert($0) }
+        
+        let sampleSection5 = TaskSection(name: "App Ideas", colorName: ".yellow", isEditable: true, order: 3, iconName: "star")
+        context.insert(sampleSection5)
+        let sampleItems5 = [
+            Item(taskText: "Idea 1", taskComplete: false, timestamp: Date(), order: 0, parentSection: sampleSection4),
+            Item(taskText: "Idea 2", taskComplete: false, timestamp: Date().addingTimeInterval(-3600), order: 1, parentSection: sampleSection4),
+            Item(taskText: "Idea 3", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 2, parentSection: sampleSection4),
+            Item(taskText: "Idea 4", taskComplete: true, timestamp: Date().addingTimeInterval(-7200), order: 3, parentSection: sampleSection4)
         ]
         sampleItems4.forEach { context.insert($0) }
     }
