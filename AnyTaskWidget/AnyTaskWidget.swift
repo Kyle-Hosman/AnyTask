@@ -113,11 +113,11 @@ struct AnyTaskWidgetEntryView: View {
     @Environment(\.widgetFamily) var family
 
     var body: some View {
-        //MARK: Small Widget Layout
-        if family == .systemSmall {
+        //MARK: Accessory Circular Layout
+        if family == .accessoryCircular {
                 VStack(alignment: .leading, spacing: 8) {
-                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
-                        HStack(spacing: 8) {
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(3)), id: \.0) { (id, text) in
+                        HStack(spacing: 4) {
                             Button(intent: CompleteTaskIntent(taskID: id)) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 4)
@@ -139,11 +139,119 @@ struct AnyTaskWidgetEntryView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, 8)
                         .background(Color.fromName(entry.sectionColorName))
                         .cornerRadius(12)
                     }
                 }
+                //.padding(.leading, -11)
+                //.padding(.trailing, -11)
+                .containerBackground(for: .widget) { Color(.systemBackground) }
+            
+        }
+        //MARK: Accessory Inline Layout
+        if family == .accessoryInline {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(3)), id: \.0) { (id, text) in
+                        HStack(spacing: 4) {
+                            Button(intent: CompleteTaskIntent(taskID: id)) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .frame(width: 25, height: 25)
+                                    if entry.completedIDs.contains(id) {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(Color.primary)
+                                            .font(.system(size: 12, weight: .bold))
+                                    }
+                                }
+                            }
+                            .buttonStyle(.borderless)
+                            Text(text)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .padding(.leading, 2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 8)
+                        .background(Color.fromName(entry.sectionColorName))
+                        .cornerRadius(12)
+                    }
+                }
+                //.padding(.leading, -11)
+                //.padding(.trailing, -11)
+                .containerBackground(for: .widget) { Color(.systemBackground) }
+            
+        }
+        //MARK: Accessory Rectangular Layout
+        if family == .accessoryRectangular {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(2)), id: \.0) { (id, text) in
+                        HStack(spacing: 1) {
+                            Button(intent: CompleteTaskIntent(taskID: id)) {
+                                ZStack {
+//                                    RoundedRectangle(cornerRadius: 12)
+//                                        .fill(Color.fromName(entry.sectionColorName))
+//                                        .frame(width: 15, height: 15)
+                                    Image(systemName: entry.sectionIconName)
+                                        .font(.headline)
+                                        .foregroundColor(Color.primary)
+                                }
+                            }
+                            .buttonStyle(.borderless)
+                            Text(text)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .padding(.leading, 2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 4)
+                        .padding(.horizontal, 8)
+                        .background(Color.fromName(entry.sectionColorName))
+                        .cornerRadius(8)
+                    }
+                }
+                //.padding(.leading, -11)
+                //.padding(.trailing, -11)
+                .containerBackground(for: .widget) { Color(.systemBackground) }
+            
+        }
+        //MARK: Small Widget Layout
+        if family == .systemSmall {
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(3)), id: \.0) { (id, text) in
+                        HStack(spacing: 4) {
+                            Button(intent: CompleteTaskIntent(taskID: id)) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .frame(width: 25, height: 25)
+                                    if entry.completedIDs.contains(id) {
+                                        Image(systemName: "checkmark")
+                                            .foregroundColor(Color.primary)
+                                            .font(.system(size: 12, weight: .bold))
+                                    }
+                                }
+                            }
+                            .buttonStyle(.borderless)
+                            Text(text)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .padding(.leading, 2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 8)
+                        .background(Color.fromName(entry.sectionColorName))
+                        .cornerRadius(12)
+                    }
+                }
+                .padding(.leading, -11)
+                .padding(.trailing, -11)
                 .containerBackground(for: .widget) { Color(.systemBackground) }
             
         }
@@ -151,7 +259,7 @@ struct AnyTaskWidgetEntryView: View {
         if family == .systemMedium {
             HStack(alignment: .top, spacing: 0) {
                 // Left-side
-                VStack(alignment: .center, spacing: 0) {
+                VStack(alignment: .center, spacing: 15) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color.fromName(entry.sectionColorName))
@@ -160,31 +268,30 @@ struct AnyTaskWidgetEntryView: View {
                             .font(.headline)
                             .foregroundColor(Color.primary)
                     }
+                    .padding(.top, 14)
                     Text(entry.sectionName)
                         .font(.system(size: 18, weight: .bold))
                         .lineLimit(2)
                         .minimumScaleFactor(0.7) // Shrinks font size
                         .foregroundColor(Color.fromName(entry.sectionColorName).opacity(100))
-                        .padding(.top, 15)
                     Text("\(entry.completedCount)/\(entry.totalCount)")
                         .font(.system(size: 18, weight: .bold))
                         .lineLimit(2)
                         .minimumScaleFactor(0.7) // Shrinks font size
                         .foregroundColor(Color.primary)
-                        .padding(.top, 15)
                 }
                 .frame(width: 80) // Left-size width
                 .padding(.trailing, 12)
                 
                 // Right-side
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \.0) { (id, text) in
+                VStack(alignment: .leading, spacing: 4) {
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(4)), id: \.0) { (id, text) in
                         HStack(spacing: 8) {
                             Button(intent: CompleteTaskIntent(taskID: id)) {
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 4)
                                         .stroke(Color.black, lineWidth: 2)
-                                        .frame(width: 25, height: 25)
+                                        .frame(width: 21, height: 21)
                                     if entry.completedIDs.contains(id) {
                                         Image(systemName: "checkmark")
                                             .foregroundColor(Color.primary)
@@ -201,24 +308,34 @@ struct AnyTaskWidgetEntryView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, 8)
                         .background(Color.fromName(entry.sectionColorName))
                         .cornerRadius(12)
                     }
                 }
+                .padding(.trailing, -10)
                 .containerBackground(for: .widget) { Color(.systemBackground) }
             }
         }
         //MARK: Large Widget Layout
         if family == .systemLarge {
-            VStack(spacing: 0) { // Set spacing to 0 for tight layout
+            VStack(spacing: 0) {
+                // Section Name at Top
+                Text(entry.sectionName)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(Color.fromName(entry.sectionColorName).opacity(100))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.top, -14)
+                    .padding(.bottom, -4)
                 // Section Switcher Row
                 HStack(spacing: 12) {
                     ForEach(entry.availableSections, id: \ .id) { section in
                         let isSelected = section.id == entry.sectionID
                         Button(intent: SwitchSectionIntent(
                             sectionID: section.id,
-                            sectionName: section.id, // You may want to pass the actual name if available
+                            sectionName: section.id,
                             sectionColorName: section.colorName,
                             sectionIconName: section.iconName
                         )) {
@@ -249,16 +366,16 @@ struct AnyTaskWidgetEntryView: View {
                                         .font(.headline)
                                         .foregroundColor(Color.primary)
                                 }
-                                
                             }
                         }
                         .buttonStyle(.plain)
                     }
                 }
                 .padding(.bottom, 8)
+                .padding(.top, 8)
                 // Bottom Part
-                VStack(alignment: .leading, spacing: 6) { // Slight spacing for readability
-                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts)), id: \ .0) { (id, text) in
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(6)), id: \.0) { (id, text) in
                         HStack(spacing: 8) {
                             Button(intent: CompleteTaskIntent(taskID: id)) {
                                 ZStack {
@@ -281,14 +398,15 @@ struct AnyTaskWidgetEntryView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 8)
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, 8)
                         .background(Color.fromName(entry.sectionColorName))
                         .cornerRadius(12)
                     }
                 }
-                // Remove extra padding below
             }
-            .frame(maxHeight: .infinity, alignment: .top) // Ensure button bar is always at the top
+            .frame(maxHeight: .infinity, alignment: .top)
+            .padding(.top, 0) // Remove gap above VStack
+            .ignoresSafeArea(.container, edges: .top) // Push content to top edge
             .containerBackground(for: .widget) { Color(.systemBackground) }
         }
         
@@ -320,11 +438,18 @@ struct AnyTaskWidget: Widget {
         }
         .configurationDisplayName("Section Tasks")
         .description("Shows the first few tasks from a section.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([
+            .systemSmall,
+            .systemMedium,
+            .systemLarge,
+            .accessoryRectangular,
+            .accessoryInline,
+            .accessoryCircular
+        ])
     }
 }
 
-#Preview(as: .systemLarge) {
+#Preview(as: .accessoryCircular) {
     AnyTaskWidget()
 } timeline: {
     TaskEntry(
@@ -332,9 +457,9 @@ struct AnyTaskWidget: Widget {
         sectionName: "To-Do",
         sectionColorName: ".green",
         sectionIconName: "pencil", sectionID: "todo",
-        taskIDs: ["1", "2", "3", "4"],
+        taskIDs: ["1", "2", "3", "4", "5", "6"],
         taskTexts: ["Sample Task 1", "Sample Task 2", "Sample Task 3", "Sample Task 4", "Sample Task 5", "Sample Task 6"],
-        completedIDs: [],
+        completedIDs: ["6"],
         totalCount: 6,
         completedCount: 0,
         refreshToken: UUID(),

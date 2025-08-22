@@ -500,7 +500,37 @@ struct ContentView: View {
         var body: some View {
             ZStack {
                 Color(.systemGroupedBackground)
-                HStack(alignment: .center, spacing: 10) {
+                HStack(alignment: .center, spacing: 5) {
+                    // Checkbox on the left
+                    if editModeState != .active {
+                        GeometryReader { geometry in
+                            ZStack {
+                                Color.clear
+                                HStack {
+                                    RoundedRectangle(cornerRadius: 4)
+                                        .stroke(Color.black, lineWidth: 2)
+                                        .frame(width: 28, height: 28)
+                                        .overlay(
+                                            item.taskComplete ?
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(Color.primary)
+                                            : nil
+                                        )
+                                    Spacer()
+                                }
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .frame(width: geometry.size.width, height: geometry.size.height)
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                let generator = UIImpactFeedbackGenerator(style: .medium)
+                                generator.impactOccurred()
+                                toggleTaskCompletion(item)
+                            }
+                        }
+                        .frame(width: 28) // controls overall size of checkbox zone
+                    }
+                    // Text VStack
                     VStack(alignment: .leading, spacing: 4) {
                         if editModeState != .active {
                             Text(item.taskText)
@@ -519,7 +549,6 @@ struct ContentView: View {
                             .focused(focusedItemID, equals: item.id)
                             .disabled(editModeState == .active)
                         }
-                        
                         if let dueDate = item.dueDate {
                             Text(dueDate, format: Date.FormatStyle(date: .numeric, time: .shortened))
                                 .font(.footnote)
@@ -528,46 +557,7 @@ struct ContentView: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .layoutPriority(1)
-                    
-                    if editModeState != .active {
-                        GeometryReader { geometry in
-                            ZStack {
-                                //Color.yellow.opacity(0.3) // debug highlight
-                                Color.clear
-                                
-                                HStack {
-                                    Spacer()
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color.black, lineWidth: 2)
-                                        .frame(width: 28, height: 28)
-                                        .overlay(
-                                            item.taskComplete ?
-                                            Image(systemName: "checkmark")
-                                                .foregroundColor(Color.primary)
-                                            : nil
-                                        )
-                                }
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            }
-                            .frame(width: geometry.size.width, height: geometry.size.height)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                let generator = UIImpactFeedbackGenerator(style: .medium)
-                                generator.impactOccurred()
-                                toggleTaskCompletion(item)
-                            }
-                        }
-                        .frame(width: 60) // controls overall size of checkbox zone
-                        
-                    } else {
-                        //                    Button(action: {
-                        //                        editingItem = item
-                        //                    }) {
-                        //                        Image(systemName: "pencil")
-                        //                            .foregroundColor(Color.primary)
-                        //                    }
-                        //                    .font(.title2)
-                    }
+                    // Move icon logic (if needed) can remain after text
                 }
                 .padding(15) // Internal
                 .background(
