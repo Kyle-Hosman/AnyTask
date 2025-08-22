@@ -115,39 +115,16 @@ struct AnyTaskWidgetEntryView: View {
     var body: some View {
         //MARK: Accessory Circular Layout
         if family == .accessoryCircular {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(3)), id: \.0) { (id, text) in
-                        HStack(spacing: 4) {
-                            Button(intent: CompleteTaskIntent(taskID: id)) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color.black, lineWidth: 2)
-                                        .frame(width: 25, height: 25)
-                                    if entry.completedIDs.contains(id) {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(Color.primary)
-                                            .font(.system(size: 12, weight: .bold))
-                                    }
-                                }
-                            }
-                            .buttonStyle(.borderless)
-                            Text(text)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.leading, 2)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(Color.fromName(entry.sectionColorName))
-                        .cornerRadius(12)
-                    }
+            ZStack {
+                Color.clear
+                Link(destination: URL(string: "anytask://quickadd")!) {
+                    Text("+Task")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.accentColor)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
-                //.padding(.leading, -11)
-                //.padding(.trailing, -11)
-                .containerBackground(for: .widget) { Color(.systemBackground) }
-            
+            }
+            .containerBackground(for: .widget) { Color(.systemBackground) }
         }
         //MARK: Accessory Inline Layout
         if family == .accessoryInline {

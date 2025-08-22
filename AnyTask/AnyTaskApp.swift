@@ -37,6 +37,14 @@ struct AnyTaskApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .onOpenURL { url in
+                    // Handle quick add deep link from widget
+                    if url.scheme == "anytask" && url.host == "quickadd" {
+                        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+                        defaults?.set(true, forKey: "ShouldFocusTaskInput")
+                        defaults?.synchronize()
+                    }
+                }
         }
         .modelContainer(sharedModelContainer)
     }

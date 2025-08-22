@@ -65,3 +65,26 @@ public struct SwitchSectionIntent: AppIntent {
         return .result()
     }
 }
+
+@available(iOS 17.0, *)
+public struct QuickAddTaskIntent: AppIntent {
+    public static var title: LocalizedStringResource = "Quick Add Task"
+
+    public init() {}
+
+    @MainActor
+    public func perform() async throws -> some IntentResult {
+        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+        // Find the 'Any' section
+        let modelContainer = try? ModelContainer(for: Item.self, TaskSection.self)
+        let context = modelContainer?.mainContext
+        let sections = (try? context?.fetch(FetchDescriptor<TaskSection>())) ?? []
+        if let anySection = sections.first(where: { $0.name == "Any" }) {
+            defaults?.set(anySection.id.uuidString, forKey: "LastSelectedSectionID")
+        }
+        defaults?.set(true, forKey: "ShouldFocusTaskInput")
+        defaults?.synchronize()
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
+}

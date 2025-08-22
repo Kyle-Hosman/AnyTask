@@ -133,6 +133,15 @@ struct ContentView: View {
                 }
                 syncCompletionStateFromWidget()
                 switchToSectionFromNotification()
+                // Quick Add Task: focus text field if flag is set
+                let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+                if defaults?.bool(forKey: "ShouldFocusTaskInput") == true {
+                    if let anySection = sectionsQuery.first(where: { $0.name == "Any" }) {
+                        selectedSection = anySection
+                    }
+                    isInputFieldFocused = true
+                    defaults?.set(false, forKey: "ShouldFocusTaskInput")
+                }
             }
             .onChange(of: selectedSection) {
                 syncSelectedSectionToWidget()
@@ -182,6 +191,14 @@ struct ContentView: View {
                         defaults?.removeObject(forKey: "TasksToToggle")
                     }
                     switchToSectionFromNotification()
+                    // Quick Add Task: focus text field if flag is set
+                    if defaults?.bool(forKey: "ShouldFocusTaskInput") == true {
+                        if let anySection = sectionsQuery.first(where: { $0.name == "Any" }) {
+                            selectedSection = anySection
+                        }
+                        isInputFieldFocused = true
+                        defaults?.set(false, forKey: "ShouldFocusTaskInput")
+                    }
                 }
             }
            // .navigationTitle("AnyTask")
