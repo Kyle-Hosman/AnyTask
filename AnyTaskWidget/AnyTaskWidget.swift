@@ -15,7 +15,7 @@ struct TaskEntry: TimelineEntry {
     let sectionName: String
     let sectionColorName: String
     let sectionIconName: String
-    let sectionID: String // <-- Add this line
+    let sectionID: String
     let taskIDs: [String]
     let taskTexts: [String]
     let completedIDs: Set<String>
@@ -23,11 +23,12 @@ struct TaskEntry: TimelineEntry {
     let completedCount: Int
     let refreshToken: UUID
     let availableSections: [SectionButtonInfo]
+    let tasksDueTodayCount: Int
 }
 
 struct Provider: TimelineProvider {
     func placeholder(in context: Context) -> TaskEntry {
-        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", sectionID: "todo", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID(), availableSections: [])
+        TaskEntry(date: Date(), sectionName: "To-Do", sectionColorName: ".green", sectionIconName: "pencil", sectionID: "todo", taskIDs: ["1", "2"], taskTexts: ["Sample Task 1", "Sample Task 2"], completedIDs: [], totalCount: 3, completedCount: 0, refreshToken: UUID(), availableSections: [], tasksDueTodayCount: 2)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
@@ -46,23 +47,19 @@ struct Provider: TimelineProvider {
 
     @MainActor
     private func loadEntry() -> TaskEntry {
-        // Query SwiftData for sections and items
         let context = modelContainer.mainContext
         let sections = (try? context.fetch(FetchDescriptor<TaskSection>())) ?? []
-        // Read selected section ID from UserDefaults (App Group)
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         let selectedSectionID = defaults?.string(forKey: "LastSelectedSectionID")
-        // Find the selected section by ID
         let selectedSection = sections.first(where: { $0.id.uuidString == selectedSectionID }) ?? sections.first ?? TaskSection(name: "No List", colorName: ".gray", isEditable: false, order: 0, iconName: "folder")
         let sectionID = selectedSection.id.uuidString
         let sectionName = selectedSection.name
         let sectionColorName = selectedSection.colorName
         let sectionIconName = selectedSection.iconName
-        // Get all items for the section, ordered
+        // Get all items for the selected section
         let items = (try? context.fetch(FetchDescriptor<Item>()))?.filter { $0.parentSection?.id == selectedSection.id } ?? []
         let allItems = items.sorted { $0.order < $1.order }
         var completedIDs = Set(allItems.filter { $0.taskComplete }.map { $0.id.uuidString })
-        // Section switcher info
         let availableSections = sections.map { SectionButtonInfo(id: $0.id.uuidString, colorName: $0.colorName, iconName: $0.iconName) }
         // --- NEW: Check for toggles in UserDefaults ---
         if let toggles = defaults?.array(forKey: "TasksToToggle") as? [[String: Any]] {
@@ -81,14 +78,22 @@ struct Provider: TimelineProvider {
             let lhsChecked = completedIDs.contains($0.id.uuidString)
             let rhsChecked = completedIDs.contains($1.id.uuidString)
             if lhsChecked == rhsChecked {
-                return $0.order < $1.order // preserve order within group
+                return $0.order < $1.order
             }
-            return !lhsChecked // unchecked first
+            return !lhsChecked
         }
         let widgetTaskIDs = sortedWidgetItems.map { $0.id.uuidString }
         let widgetTaskTexts = sortedWidgetItems.map { $0.taskText }
         let totalCount = allItems.count
         let completedCount = completedIDs.count
+        // --- NEW: Count tasks due today across all sections ---
+        let allItemsAllSections = (try? context.fetch(FetchDescriptor<Item>())) ?? []
+        let today = Calendar.current.startOfDay(for: Date())
+        let tasksDueTodayCount = allItemsAllSections.filter {
+            guard let dueDate = $0.dueDate else { return false }
+            let dueDay = Calendar.current.startOfDay(for: dueDate)
+            return dueDay == today && !$0.taskComplete
+        }.count
         return TaskEntry(
             date: Date(),
             sectionName: sectionName,
@@ -101,7 +106,8 @@ struct Provider: TimelineProvider {
             totalCount: totalCount,
             completedCount: completedCount,
             refreshToken: UUID(),
-            availableSections: availableSections
+            availableSections: availableSections,
+            tasksDueTodayCount: tasksDueTodayCount
         )
     }
 }
@@ -128,39 +134,20 @@ struct AnyTaskWidgetEntryView: View {
         }
         //MARK: Accessory Inline Layout
         if family == .accessoryInline {
-                VStack(alignment: .leading, spacing: 8) {
-                    ForEach(Array(zip(entry.taskIDs, entry.taskTexts).prefix(3)), id: \.0) { (id, text) in
-                        HStack(spacing: 4) {
-                            Button(intent: CompleteTaskIntent(taskID: id)) {
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 4)
-                                        .stroke(Color.black, lineWidth: 2)
-                                        .frame(width: 25, height: 25)
-                                    if entry.completedIDs.contains(id) {
-                                        Image(systemName: "checkmark")
-                                            .foregroundColor(Color.primary)
-                                            .font(.system(size: 12, weight: .bold))
-                                    }
-                                }
-                            }
-                            .buttonStyle(.borderless)
-                            Text(text)
-                                .font(.subheadline)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                                .padding(.leading, 2)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 8)
-                        .padding(.horizontal, 8)
-                        .background(Color.fromName(entry.sectionColorName))
-                        .cornerRadius(12)
-                    }
+            ZStack {
+                Color.clear
+                let count = entry.tasksDueTodayCount
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.accentColor)
+                    Text(count > 0 ? "\(count) Task\(count == 1 ? "" : "s") Due Today" : "No Tasks Due Today")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.accentColor)
                 }
-                //.padding(.leading, -11)
-                //.padding(.trailing, -11)
-                .containerBackground(for: .widget) { Color(.systemBackground) }
-            
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            }
+            .containerBackground(for: .widget) { Color(.systemBackground) }
         }
         //MARK: Accessory Rectangular Layout
         if family == .accessoryRectangular {
@@ -426,7 +413,7 @@ struct AnyTaskWidget: Widget {
     }
 }
 
-#Preview(as: .accessoryCircular) {
+#Preview(as: .accessoryInline) {
     AnyTaskWidget()
 } timeline: {
     TaskEntry(
@@ -445,6 +432,7 @@ struct AnyTaskWidget: Widget {
             SectionButtonInfo(id: "reminders", colorName: ".red", iconName: "flag"),
             SectionButtonInfo(id: "shopping",  colorName: ".blue", iconName: "cart"),
             SectionButtonInfo(id: "ideas",  colorName: ".yellow", iconName: "star")
-        ]
+        ],
+        tasksDueTodayCount: 2 // <-- Added missing argument
     )
 }
