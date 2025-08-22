@@ -61,21 +61,14 @@ struct Provider: TimelineProvider {
         // Get all items for the section, ordered
         let items = (try? context.fetch(FetchDescriptor<Item>()))?.filter { $0.parentSection?.id == selectedSection.id } ?? []
         let allItems = items.sorted { $0.order < $1.order }
-        let incomplete = allItems.filter { !$0.taskComplete }
-        let complete = allItems.filter { $0.taskComplete }
-        let widgetItems = incomplete + complete
-        let widgetTaskIDs = widgetItems.map { $0.id.uuidString }
-        let widgetTaskTexts = widgetItems.map { $0.taskText }
-        var completedIDs = Set(complete.map { $0.id.uuidString })
-        let totalCount = allItems.count
-        let completedCount = complete.count
+        var completedIDs = Set(allItems.filter { $0.taskComplete }.map { $0.id.uuidString })
         // Section switcher info
         let availableSections = sections.map { SectionButtonInfo(id: $0.id.uuidString, colorName: $0.colorName, iconName: $0.iconName) }
         // --- NEW: Check for toggles in UserDefaults ---
         if let toggles = defaults?.array(forKey: "TasksToToggle") as? [[String: Any]] {
             for toggle in toggles {
                 guard let toggledTaskID = toggle["id"] as? String,
-                      widgetTaskIDs.contains(toggledTaskID) else { continue }
+                      allItems.contains(where: { $0.id.uuidString == toggledTaskID }) else { continue }
                 if completedIDs.contains(toggledTaskID) {
                     completedIDs.remove(toggledTaskID)
                 } else {
@@ -83,6 +76,19 @@ struct Provider: TimelineProvider {
                 }
             }
         }
+        // --- Sort items: unchecked first, checked last ---
+        let sortedWidgetItems = allItems.sorted {
+            let lhsChecked = completedIDs.contains($0.id.uuidString)
+            let rhsChecked = completedIDs.contains($1.id.uuidString)
+            if lhsChecked == rhsChecked {
+                return $0.order < $1.order // preserve order within group
+            }
+            return !lhsChecked // unchecked first
+        }
+        let widgetTaskIDs = sortedWidgetItems.map { $0.id.uuidString }
+        let widgetTaskTexts = sortedWidgetItems.map { $0.taskText }
+        let totalCount = allItems.count
+        let completedCount = completedIDs.count
         return TaskEntry(
             date: Date(),
             sectionName: sectionName,
@@ -93,7 +99,7 @@ struct Provider: TimelineProvider {
             taskTexts: Array(widgetTaskTexts.prefix(6)),
             completedIDs: completedIDs,
             totalCount: totalCount,
-            completedCount: completedIDs.count,
+            completedCount: completedCount,
             refreshToken: UUID(),
             availableSections: availableSections
         )
