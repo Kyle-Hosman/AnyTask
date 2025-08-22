@@ -14,9 +14,12 @@ struct AnyTaskApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
+            TaskSection.self
         ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
+        // Use App Group container for shared store
+        let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.kylehosman.AnyTask")!
+        let storeURL = containerURL.appendingPathComponent("default.store")
+        let modelConfiguration = ModelConfiguration(schema: schema, url: storeURL)
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {

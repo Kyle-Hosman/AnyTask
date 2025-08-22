@@ -1,6 +1,14 @@
 import WidgetKit
 import SwiftUI
 import AppIntents
+import SwiftData
+
+// Shared SwiftData ModelContainer for widget
+let schema = Schema([Item.self, TaskSection.self])
+let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.kylehosman.AnyTask")!
+let storeURL = containerURL.appendingPathComponent("default.store")
+let modelConfiguration = ModelConfiguration(schema: schema, url: storeURL)
+let modelContainer = try! ModelContainer(for: schema, configurations: [modelConfiguration])
 
 struct TaskEntry: TimelineEntry {
     let date: Date
@@ -23,39 +31,72 @@ struct Provider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (TaskEntry) -> ()) {
-        completion(loadEntry())
+        Task { @MainActor in
+            completion(loadEntry())
+        }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<TaskEntry>) -> ()) {
-        let entry = loadEntry()
-        let timeline = Timeline(entries: [entry], policy: .after(Date().addingTimeInterval(300)))
-        completion(timeline)
+        Task { @MainActor in
+            let entry = loadEntry()
+            let timeline = Timeline(entries: [entry], policy: .atEnd)
+            completion(timeline)
+        }
     }
 
+    @MainActor
     private func loadEntry() -> TaskEntry {
+        // Query SwiftData for sections and items
+        let context = modelContainer.mainContext
+        let sections = (try? context.fetch(FetchDescriptor<TaskSection>())) ?? []
+        // Read selected section ID from UserDefaults (App Group)
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
-        let sectionName = defaults?.string(forKey: "WidgetSectionName") ?? "No List"
-        let sectionColorName = defaults?.string(forKey: "WidgetSectionColor") ?? ".gray"
-        let sectionIconName = defaults?.string(forKey: "WidgetSectionIcon") ?? "folder"
-        let sectionID = defaults?.string(forKey: "WidgetSectionID") ?? ""
-        // Use the full list for counts
-        let allTaskIDs = defaults?.stringArray(forKey: "AllSectionTaskIDs_\(sectionID)") ?? []
-        // Use the display list for the first 6 (for large widget)
-        let taskIDs = defaults?.stringArray(forKey: "WidgetTaskIDs") ?? []
-        let taskTexts = defaults?.stringArray(forKey: "WidgetTaskTexts") ?? []
-        // --- Begin per-section completed IDs dictionary ---
-        let completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
-        let completedIDs = Set(completedDict[sectionID] ?? [])
-        // --- End per-section completed IDs dictionary ---
-        let totalCount = allTaskIDs.count
-        let completedCount = allTaskIDs.filter { completedIDs.contains($0) }.count
-        print("[DEBUG] Provider.loadEntry: WidgetTaskIDs=\(taskIDs), WidgetTaskTexts=\(taskTexts), completedIDs=\(completedIDs), allTaskIDs=\(allTaskIDs)")
-        
-        // Load available sections for buttons
-        let availableSectionsData = defaults?.data(forKey: "AvailableSections") ?? Data()
-        let availableSections = (try? JSONDecoder().decode([SectionButtonInfo].self, from: availableSectionsData)) ?? []
-        
-        return TaskEntry(date: Date(), sectionName: sectionName, sectionColorName: sectionColorName, sectionIconName: sectionIconName, sectionID: sectionID, taskIDs: Array(taskIDs.prefix(6)), taskTexts: Array(taskTexts.prefix(6)), completedIDs: completedIDs, totalCount: totalCount, completedCount: completedCount, refreshToken: UUID(), availableSections: availableSections)
+        let selectedSectionID = defaults?.string(forKey: "LastSelectedSectionID")
+        // Find the selected section by ID
+        let selectedSection = sections.first(where: { $0.id.uuidString == selectedSectionID }) ?? sections.first ?? TaskSection(name: "No List", colorName: ".gray", isEditable: false, order: 0, iconName: "folder")
+        let sectionID = selectedSection.id.uuidString
+        let sectionName = selectedSection.name
+        let sectionColorName = selectedSection.colorName
+        let sectionIconName = selectedSection.iconName
+        // Get all items for the section, ordered
+        let items = (try? context.fetch(FetchDescriptor<Item>()))?.filter { $0.parentSection?.id == selectedSection.id } ?? []
+        let allItems = items.sorted { $0.order < $1.order }
+        let incomplete = allItems.filter { !$0.taskComplete }
+        let complete = allItems.filter { $0.taskComplete }
+        let widgetItems = incomplete + complete
+        let widgetTaskIDs = widgetItems.map { $0.id.uuidString }
+        let widgetTaskTexts = widgetItems.map { $0.taskText }
+        var completedIDs = Set(complete.map { $0.id.uuidString })
+        let totalCount = allItems.count
+        let completedCount = complete.count
+        // Section switcher info
+        let availableSections = sections.map { SectionButtonInfo(id: $0.id.uuidString, colorName: $0.colorName, iconName: $0.iconName) }
+        // --- NEW: Check for toggles in UserDefaults ---
+        if let toggles = defaults?.array(forKey: "TasksToToggle") as? [[String: Any]] {
+            for toggle in toggles {
+                guard let toggledTaskID = toggle["id"] as? String,
+                      widgetTaskIDs.contains(toggledTaskID) else { continue }
+                if completedIDs.contains(toggledTaskID) {
+                    completedIDs.remove(toggledTaskID)
+                } else {
+                    completedIDs.insert(toggledTaskID)
+                }
+            }
+        }
+        return TaskEntry(
+            date: Date(),
+            sectionName: sectionName,
+            sectionColorName: sectionColorName,
+            sectionIconName: sectionIconName,
+            sectionID: sectionID,
+            taskIDs: Array(widgetTaskIDs.prefix(6)),
+            taskTexts: Array(widgetTaskTexts.prefix(6)),
+            completedIDs: completedIDs,
+            totalCount: totalCount,
+            completedCount: completedIDs.count,
+            refreshToken: UUID(),
+            availableSections: availableSections
+        )
     }
 }
 
@@ -202,6 +243,7 @@ struct AnyTaskWidgetEntryView: View {
                                         .font(.headline)
                                         .foregroundColor(Color.primary)
                                 }
+                                
                             }
                         }
                         .buttonStyle(.plain)
@@ -293,8 +335,8 @@ struct AnyTaskWidget: Widget {
         availableSections: [
             SectionButtonInfo(id: "todo", colorName: ".green", iconName: "pencil"),
             SectionButtonInfo(id: "reminders", colorName: ".red", iconName: "flag"),
-            SectionButtonInfo(id: "shopping", colorName: ".blue", iconName: "cart"),
-            SectionButtonInfo(id: "ideas", colorName: ".yellow", iconName: "star")
+            SectionButtonInfo(id: "shopping",  colorName: ".blue", iconName: "cart"),
+            SectionButtonInfo(id: "ideas",  colorName: ".yellow", iconName: "star")
         ]
     )
 }

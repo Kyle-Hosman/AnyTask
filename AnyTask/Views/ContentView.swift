@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import UserNotifications
 import WidgetKit
+import Foundation
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -39,52 +40,14 @@ struct ContentView: View {
     @State private var startTitleAnimation: Bool = false
     
     private func updateWidgetData() {
-        guard let selectedSection = self.selectedSection else { return }
-        // Get ALL items in the section, ordered by 'order'
-        let allItems = self.itemsQuery
-            .filter { $0.parentSection == selectedSection }
-            .sorted { $0.order < $1.order }
-        // Separate incomplete and complete items
-        let incomplete = allItems.filter { !$0.taskComplete }
-        let complete = allItems.filter { $0.taskComplete }
-        // Combine incomplete first, then complete
-        let widgetItems = incomplete + complete
-        let widgetTaskIDs = widgetItems.map { $0.id.uuidString }
-        let widgetTaskTexts = widgetItems.map { $0.taskText }
-        let completedIDs = complete.map { $0.id.uuidString }
-        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
-        defaults?.set(selectedSection.name, forKey: "WidgetSectionName")
-        defaults?.set(selectedSection.colorName, forKey: "WidgetSectionColor")
-        defaults?.set(selectedSection.iconName, forKey: "WidgetSectionIcon")
-        defaults?.set(widgetTaskIDs, forKey: "WidgetTaskIDs")
-        defaults?.set(widgetTaskTexts, forKey: "WidgetTaskTexts")
-        // --- Begin per-section completed IDs dictionary ---
-        var completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
-        completedDict[selectedSection.id.uuidString] = completedIDs
-        defaults?.set(completedDict, forKey: "WidgetCompletedTaskIDsDict")
-        // --- End per-section completed IDs dictionary ---
-        defaults?.set(selectedSection.id.uuidString, forKey: "WidgetSectionID")
-        // --- Store the full, ordered list for the section ---
-        let allTaskIDs = allItems.map { $0.id.uuidString }
-        let allTaskTexts = allItems.map { $0.taskText }
-        defaults?.set(allTaskIDs, forKey: "AllSectionTaskIDs_\(selectedSection.id.uuidString)")
-        defaults?.set(allTaskTexts, forKey: "AllSectionTaskTexts_\(selectedSection.id.uuidString)")
-        // --- End full list ---
-        // --- Store available sections for widget section switcher ---
-        let sectionButtonInfo = sections.map { section in
-            SectionButtonInfo(id: section.id.uuidString, colorName: section.colorName, iconName: section.iconName)
-        }
-        if let encoded = try? JSONEncoder().encode(sectionButtonInfo) {
-            defaults?.set(encoded, forKey: "AvailableSections")
-        }
-        // --- End available sections ---
-        WidgetCenter.shared.reloadAllTimelines()
+        // No need to write main data to UserDefaults anymore
+        WidgetCenter.shared.reloadAllTimelines() // More robust widget refresh
     }
     
     private func syncCompletionStateFromWidget() {
+        // Only keep logic for completion syncing if needed
         let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
         let sectionID = selectedSection?.id.uuidString ?? ""
-        // Only sync if the widget actually updated this section
         let widgetDidUpdateSectionID = defaults?.string(forKey: "WidgetDidUpdateSectionID")
         guard widgetDidUpdateSectionID == sectionID else { return }
         let completedDict = defaults?.dictionary(forKey: "WidgetCompletedTaskIDsDict") as? [String: [String]] ?? [:]
@@ -101,7 +64,6 @@ struct ContentView: View {
             }
         }
         try? modelContext.save()
-        // Clear the flag after syncing
         defaults?.removeObject(forKey: "WidgetDidUpdateSectionID")
     }
     
@@ -172,7 +134,13 @@ struct ContentView: View {
                 syncCompletionStateFromWidget()
                 switchToSectionFromNotification()
             }
+            .onChange(of: selectedSection) {
+                syncSelectedSectionToWidget()
+            }
             .onChange(of: scenePhase) {
+                if scenePhase == .background || scenePhase == .inactive {
+                    syncSelectedSectionToWidget()
+                }
                 if scenePhase == .active {
                     syncCompletionStateFromWidget()
                     // --- Listen for WidgetDidSwitchSectionID ---
@@ -184,6 +152,34 @@ struct ContentView: View {
                         defaults?.removeObject(forKey: "WidgetDidSwitchSectionID")
                     } else {
                         updateWidgetData()
+                    }
+                    // --- Listen for TaskToToggle from Widget ---
+                    if let taskID = defaults?.string(forKey: "TaskToToggle") {
+                        if let item = itemsQuery.first(where: { $0.id.uuidString == taskID }) {
+                            item.taskComplete.toggle()
+                            item.completedAt = item.taskComplete ? Date() : nil
+                            try? modelContext.save()
+                        }
+                        defaults?.removeObject(forKey: "TaskToToggle")
+                        defaults?.removeObject(forKey: "TaskToggleRequestTime")
+                        updateWidgetData()
+                    }
+                    // --- Listen for TasksToToggle from Widget ---
+                    if let toggles = defaults?.array(forKey: "TasksToToggle") as? [[String: Any]] {
+                        var didUpdate = false
+                        for toggle in toggles {
+                            guard let taskID = toggle["id"] as? String else { continue }
+                            if let item = itemsQuery.first(where: { $0.id.uuidString == taskID }) {
+                                item.taskComplete.toggle()
+                                item.completedAt = item.taskComplete ? Date() : nil
+                                didUpdate = true
+                            }
+                        }
+                        if didUpdate {
+                            try? modelContext.save()
+                            updateWidgetData()
+                        }
+                        defaults?.removeObject(forKey: "TasksToToggle")
                     }
                     switchToSectionFromNotification()
                 }
@@ -640,6 +636,7 @@ struct ContentView: View {
             }
             
             updateWidgetData()
+            // Removed redundant WidgetCenter.shared.reloadAllTimelines() call
         }
     }
 
@@ -805,6 +802,14 @@ struct ContentView: View {
             selectedSection = section
             UserDefaults.standard.removeObject(forKey: "SectionToShowOnLaunch")
         }
+    }
+    
+    private func syncSelectedSectionToWidget() {
+        guard let section = selectedSection else { return }
+        let defaults = UserDefaults(suiteName: "group.com.kylehosman.AnyTask")
+        defaults?.set(section.id.uuidString, forKey: "LastSelectedSectionID")
+        defaults?.synchronize()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 }
 
