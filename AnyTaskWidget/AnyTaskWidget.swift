@@ -291,8 +291,8 @@ struct AnyTaskWidgetEntryView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.top, -14)
-                    .padding(.bottom, -4)
+                    .padding(.top, -8)
+                    .padding(.bottom, -2)
                 // Section Switcher Row
                 HStack(spacing: 12) {
                     ForEach(entry.availableSections, id: \ .id) { section in
@@ -370,6 +370,8 @@ struct AnyTaskWidgetEntryView: View {
             }
             .frame(maxHeight: .infinity, alignment: .top)
             .padding(.top, 0) // Remove gap above VStack
+            .padding(.leading, -11)
+            .padding(.trailing, -11)
             .ignoresSafeArea(.container, edges: .top) // Push content to top edge
             .containerBackground(for: .widget) { Color(.systemBackground) }
         }
@@ -413,7 +415,7 @@ struct AnyTaskWidget: Widget {
     }
 }
 
-#Preview(as: .accessoryInline) {
+#Preview(as: .systemLarge) {
     AnyTaskWidget()
 } timeline: {
     TaskEntry(
