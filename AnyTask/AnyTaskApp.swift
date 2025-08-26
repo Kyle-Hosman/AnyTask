@@ -30,7 +30,6 @@ struct AnyTaskApp: App {
     private let notificationDelegate: NotificationDelegate
     
     init() {
-        Color.printAllColorHexCodes()
         self.notificationDelegate = NotificationDelegate(modelContainer: sharedModelContainer)
         UNUserNotificationCenter.current().delegate = notificationDelegate
     }
