@@ -429,7 +429,7 @@
 				CODE_SIGN_ENTITLEMENTS = AnyTaskWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.3;
+				CURRENT_PROJECT_VERSION = 1.4;
 				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnyTaskWidget/Info.plist;
@@ -459,7 +459,7 @@
 				CODE_SIGN_ENTITLEMENTS = AnyTaskWidgetExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.3;
+				CURRENT_PROJECT_VERSION = 1.4;
 				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = AnyTaskWidget/Info.plist;
@@ -611,7 +611,7 @@
 				CODE_SIGN_ENTITLEMENTS = AnyTask/AnyTask.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.3;
+				CURRENT_PROJECT_VERSION = 1.4;
 				DEVELOPMENT_ASSET_PATHS = "\"AnyTask/Preview Content\"";
 				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_PREVIEWS = YES;
@@ -648,7 +648,7 @@
 				CODE_SIGN_ENTITLEMENTS = AnyTask/AnyTask.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1.3;
+				CURRENT_PROJECT_VERSION = 1.4;
 				DEVELOPMENT_ASSET_PATHS = "\"AnyTask/Preview Content\"";
 				DEVELOPMENT_TEAM = NKNVSB4M2L;
 				ENABLE_PREVIEWS = YES;
