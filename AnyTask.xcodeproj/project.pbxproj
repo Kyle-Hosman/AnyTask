@@ -57,7 +57,6 @@
 		275D7E232E2EB6B10098E17A /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		275D7E252E2EB6B10098E17A /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		27960A192E4D03D800248B59 /* SectionButtonInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SectionButtonInfo.swift; sourceTree = "<group>"; };
-		27CB69B42E2EBEDA00DE7721 /* AnyTaskWidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = AnyTaskWidgetExtension.entitlements; sourceTree = "<group>"; };
 		27D96F642DC0520300259D9D /* AnyTask.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = AnyTask.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		27D96F762DC0520400259D9D /* AnyTaskTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnyTaskTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		27D96F802DC0520400259D9D /* AnyTaskUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AnyTaskUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -177,7 +176,6 @@
 				27D96F662DC0520300259D9D /* AnyTask */,
 				27D96F792DC0520400259D9D /* AnyTaskTests */,
 				27D96F832DC0520400259D9D /* AnyTaskUITests */,
-				27CB69B42E2EBEDA00DE7721 /* AnyTaskWidgetExtension.entitlements */,
 				275D7E272E2EB6B10098E17A /* AnyTaskWidget */,
 				275D7E222E2EB6B10098E17A /* Frameworks */,
 				27D96F652DC0520300259D9D /* Products */,
