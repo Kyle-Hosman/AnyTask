@@ -9,10 +9,12 @@ struct ItemEditSheet: View {
     @State private var editedText: String
     @State private var selectedSection: TaskSection
     @State private var dueDate: Date
-    @State private var hasDueDate: Bool
-    // Repeat notification states
-    @State private var repeatNotification: Bool
-    @State private var repeatInterval: TimeInterval
+    @State private var hasDueDate: Bool // deprecated
+    @State private var repeatIntervalType: RepeatIntervalType
+    // Replace hasDate, hasTime, selectedDate, selectedTime with:
+    @State private var hasDateTime: Bool
+    @State private var selectedDateTime: Date
+    @State private var endRepeatOnComplete: Bool
 
     init(item: Item, sections: [TaskSection], onSave: @escaping (Item) -> Void, onCancel: @escaping () -> Void) {
         self.item = item
@@ -21,10 +23,36 @@ struct ItemEditSheet: View {
         self.onCancel = onCancel
         _editedText = State(initialValue: item.taskText)
         _selectedSection = State(initialValue: item.parentSection ?? sections.first!)
-        _dueDate = State(initialValue: item.dueDate ?? Date())
-        _hasDueDate = State(initialValue: item.dueDate != nil)
-        _repeatNotification = State(initialValue: item.repeatNotification)
-        _repeatInterval = State(initialValue: item.repeatInterval ?? 3600) // Default 1 hour
+        let initialDate = item.dueDate ?? Date()
+        _dueDate = State(initialValue: initialDate)
+        _hasDueDate = State(initialValue: item.dueDate != nil) // deprecated
+        _repeatIntervalType = State(initialValue: item.repeatIntervalType ?? .never)
+        // New state
+        if let dueDate = item.dueDate {
+            _hasDateTime = State(initialValue: true)
+            _selectedDateTime = State(initialValue: dueDate)
+        } else {
+            _hasDateTime = State(initialValue: false)
+            let now = Date()
+            let calendar = Calendar.current
+            var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: now)
+            if let minute = components.minute {
+                let remainder = minute % 5
+                if remainder != 0 {
+                    components.minute = minute + (5 - remainder)
+                    if components.minute! >= 60 {
+                        components.minute = 0
+                        if let hour = components.hour {
+                            components.hour = hour + 1
+                        }
+                    }
+                }
+            }
+            components.second = 0
+            let roundedDate = calendar.date(from: components) ?? now
+            _selectedDateTime = State(initialValue: roundedDate)
+        }
+        _endRepeatOnComplete = State(initialValue: item.endRepeatOnComplete)
     }
 
     var body: some View {
@@ -40,9 +68,14 @@ struct ItemEditSheet: View {
                 trailing: Button("Save") {
                     item.taskText = editedText
                     item.parentSection = selectedSection
-                    item.dueDate = hasDueDate ? dueDate : nil
-                    item.repeatNotification = hasDueDate ? repeatNotification : false
-                    item.repeatInterval = (hasDueDate && repeatNotification) ? repeatInterval : nil
+                    if hasDateTime {
+                        item.dueDate = selectedDateTime
+                        item.repeatIntervalType = repeatIntervalType
+                    } else {
+                        item.dueDate = nil
+                        item.repeatIntervalType = .never
+                    }
+                    item.endRepeatOnComplete = endRepeatOnComplete
                     onSave(item)
                     if item.dueDate != nil {
                         NotificationManager.scheduleNotification(for: item)
@@ -89,36 +122,76 @@ struct ItemEditSheet: View {
 
     private var notifySection: some View {
         UIDatePicker.appearance().minuteInterval = 5
+        let dateTimeFormatter: DateFormatter = {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .short
+            return formatter
+        }()
         return Section(header: Text("Notify at:")) {
-            Toggle("Date", isOn: $hasDueDate)
-            if hasDueDate {
-                DatePicker("", selection: $dueDate, displayedComponents: [.date, .hourAndMinute])
-                Toggle("Repeat", isOn: $repeatNotification)
-                if repeatNotification {
-                    RepeatIntervalRow(repeatInterval: $repeatInterval)
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Date & Time")
+                    if hasDateTime {
+                        Text(dateTimeFormatter.string(from: selectedDateTime))
+                            .font(.subheadline)
+                            .foregroundColor(.blue)
+                    }
+                }
+                Spacer()
+                Toggle("", isOn: $hasDateTime)
+                    .labelsHidden()
+            }
+            if hasDateTime {
+                DatePicker("", selection: $selectedDateTime, displayedComponents: [.date])
+                    .datePickerStyle(.graphical)
+                DatePicker("", selection: $selectedDateTime, displayedComponents: [.hourAndMinute])
+                    .datePickerStyle(.wheel)
+                RepeatIntervalRow(repeatIntervalType: $repeatIntervalType)
+                if repeatIntervalType != .never {
+                    Toggle("End repeat once completed", isOn: $endRepeatOnComplete)
                 }
             }
         }
     }
 
     private struct RepeatIntervalRow: View {
-        @Binding var repeatInterval: TimeInterval
+        @Binding var repeatIntervalType: RepeatIntervalType
         var body: some View {
             HStack {
-                Text("Every:")
+                Text("Repeat:")
                 Spacer()
-                Picker("", selection: $repeatInterval) {
-                    Text("1 min").tag(60.0)
-                    Text("15 min").tag(900.0)
-                    Text("30 min").tag(1800.0)
-                    Text("1 hour").tag(3600.0)
-                    Text("2 hours").tag(7200.0)
-                    Text("day").tag(86400.0)
-                    Text("week").tag(604800.0)
-                    
+                Picker("", selection: $repeatIntervalType) {
+                    ForEach(RepeatIntervalType.allCases, id: \ .self) { type in
+                        Text(type.displayName).tag(type)
+                    }
                 }
                 .pickerStyle(.menu)
             }
         }
     }
 }
+
+#if DEBUG
+struct ItemEditSheet_Previews: PreviewProvider {
+    static var previews: some View {
+        let sampleSection = TaskSection(id: UUID(), name: "Personal", colorName: "blue", isEditable: true, order: 0, iconName: "person")
+        let otherSection = TaskSection(id: UUID(), name: "Work", colorName: "green", isEditable: true, order: 1, iconName: "briefcase")
+        let sampleItem = Item(
+            taskText: "Sample Task",
+            taskComplete: false,
+            timestamp: Date(),
+            order: 0,
+            parentSection: sampleSection,
+            dueDate: Date().addingTimeInterval(3600),
+            repeatIntervalType: .never
+        )
+        return ItemEditSheet(
+            item: sampleItem,
+            sections: [sampleSection, otherSection],
+            onSave: { _ in },
+            onCancel: {}
+        )
+    }
+}
+#endif

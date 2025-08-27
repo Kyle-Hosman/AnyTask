@@ -715,6 +715,9 @@ struct ContentView: View {
                     item.previousOrder = item.order
                     item.taskComplete = true
                     item.completedAt = Date()
+                    if item.endRepeatOnComplete {
+                        NotificationManager.cancelNotification(for: item)
+                    }
                     let incomplete = itemsQuery.filter { $0.parentSection == selectedSection && !$0.taskComplete && $0.id != item.id }
                     for other in incomplete where other.order > item.order {
                         other.order -= 1

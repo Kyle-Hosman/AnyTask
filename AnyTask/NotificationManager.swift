@@ -30,9 +30,8 @@ struct NotificationManager {
             }
         }
         
-        // If repeat is enabled, schedule the next notification after repeatInterval
-        if item.repeatNotification, let interval = item.repeatInterval, interval >= 60 {
-            // Schedule the next notification after the interval
+        // If repeat interval is set, schedule the next notification after repeatIntervalType
+        if let interval = item.repeatIntervalType?.timeInterval, interval >= 60 {
             let nextDate = dueDate.addingTimeInterval(interval)
             let nextContent = UNMutableNotificationContent()
             nextContent.title = item.parentSection?.name ?? "AnyTask"
@@ -63,9 +62,8 @@ struct NotificationManager {
         if let sectionID = item.parentSection?.id {
             UserDefaults.standard.set(sectionID.uuidString, forKey: "SectionToShowOnLaunch")
         }
-        // Only reschedule if not completed and repeat is enabled
-        if !item.taskComplete, item.repeatNotification, let interval = item.repeatInterval {
-            // Set the next due date to now + interval
+        // Only reschedule if not completed and repeat interval is set
+        if !item.taskComplete, let interval = item.repeatIntervalType?.timeInterval {
             item.dueDate = Date().addingTimeInterval(interval)
             try? modelContext.save()
             scheduleNotification(for: item)
