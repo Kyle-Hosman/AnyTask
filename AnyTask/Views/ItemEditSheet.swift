@@ -14,6 +14,7 @@ struct ItemEditSheet: View {
     // Replace hasDate, hasTime, selectedDate, selectedTime with:
     @State private var hasDateTime: Bool
     @State private var selectedDateTime: Date
+    @State private var endRepeatOnComplete: Bool
 
     init(item: Item, sections: [TaskSection], onSave: @escaping (Item) -> Void, onCancel: @escaping () -> Void) {
         self.item = item
@@ -32,7 +33,6 @@ struct ItemEditSheet: View {
             _selectedDateTime = State(initialValue: dueDate)
         } else {
             _hasDateTime = State(initialValue: false)
-            // Round up to next 5-minute interval
             let now = Date()
             let calendar = Calendar.current
             var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: now)
@@ -52,6 +52,7 @@ struct ItemEditSheet: View {
             let roundedDate = calendar.date(from: components) ?? now
             _selectedDateTime = State(initialValue: roundedDate)
         }
+        _endRepeatOnComplete = State(initialValue: item.endRepeatOnComplete)
     }
 
     var body: some View {
@@ -74,6 +75,7 @@ struct ItemEditSheet: View {
                         item.dueDate = nil
                         item.repeatIntervalType = .never
                     }
+                    item.endRepeatOnComplete = endRepeatOnComplete
                     onSave(item)
                     if item.dueDate != nil {
                         NotificationManager.scheduleNotification(for: item)
@@ -146,6 +148,9 @@ struct ItemEditSheet: View {
                 DatePicker("", selection: $selectedDateTime, displayedComponents: [.hourAndMinute])
                     .datePickerStyle(.wheel)
                 RepeatIntervalRow(repeatIntervalType: $repeatIntervalType)
+                if repeatIntervalType != .never {
+                    Toggle("End repeat once completed", isOn: $endRepeatOnComplete)
+                }
             }
         }
     }
