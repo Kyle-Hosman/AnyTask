@@ -125,9 +125,9 @@ AnyTask does not collect or store your personal data on any servers — there ar
 
 ## Built for
 
-- [ADHD](https://anytaskapp.com/for/adhd)
 - [Families](https://anytaskapp.com/for/families)
 - [Students](https://anytaskapp.com/for/students)
+- [ADHD](https://anytaskapp.com/for/adhd)
 
 ---
 
