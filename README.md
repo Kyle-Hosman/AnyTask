@@ -14,7 +14,7 @@
 
 <br>
 
-<img src="./images/Screenshots/en-US-1-Hero%20Shot.png" alt="AnyTask on iPhone" width="320">
+<img src="./images/Screenshots/en-US-1-Hero%20Shot.png" alt="AnyTask on iPhone" width="260">
 
 </div>
 
