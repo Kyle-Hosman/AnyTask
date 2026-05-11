@@ -6,7 +6,9 @@
 
 This repository is the public home for AnyTask: a place to file bug reports, request features, browse changelogs, and find resources like Apple Shortcuts and the press kit. The app itself is closed-source.
 
-![AnyTask hero](./Screenshots/en-US-1-Hero%20Shot.png)
+<p align="center">
+  <img src="./Screenshots/en-US-1-Hero%20Shot.png" alt="AnyTask hero" width="320">
+</p>
 
 ---
 
@@ -43,11 +45,14 @@ AnyTask is a fast, native task and reminders app for the Apple ecosystem, built 
 
 ## Screenshots
 
-| Customize | Collaborate |
-| :-: | :-: |
-| ![Customize lists with colors and icons](./Screenshots/en-US-2-Customize.png) | ![Real-time shared lists via iCloud](./Screenshots/en-US-3-Collaboration.png) |
-| **Calendar** | **Widgets** |
-| ![Calendar view synced with Apple Calendar](./Screenshots/en-US-4-Calendar.png) | ![Home Screen and Lock Screen widgets](./Screenshots/en-US-5-Widgets.png) |
+<table>
+  <tr>
+    <td align="center"><img src="./Screenshots/en-US-2-Customize.png" alt="Customize" width="220"><br><sub><b>Customize</b></sub></td>
+    <td align="center"><img src="./Screenshots/en-US-3-Collaboration.png" alt="Collaborate" width="220"><br><sub><b>Collaborate</b></sub></td>
+    <td align="center"><img src="./Screenshots/en-US-4-Calendar.png" alt="Calendar" width="220"><br><sub><b>Calendar</b></sub></td>
+    <td align="center"><img src="./Screenshots/en-US-5-Widgets.png" alt="Widgets" width="220"><br><sub><b>Widgets</b></sub></td>
+  </tr>
+</table>
 
 ## Pricing
 
