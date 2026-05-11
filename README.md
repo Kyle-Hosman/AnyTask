@@ -93,7 +93,7 @@ Yes — Home Screen and Lock Screen widgets are included.
 <details>
 <summary><b>How is AnyTask different from Apple Reminders?</b></summary>
 
-Inspired by Reminders but built to go further. AnyTask adds an "Any" inbox, a Lock Screen widget, Sort mode, drag-and-drop on every list, and inline natural-language dates.
+Inspired by Reminders but built to go further. AnyTask adds an "Any" inbox, a one-tap to input tasks Lock Screen widget, Sort mode, drag-and-drop on every list, and inline natural-language dates.
 </details>
 
 <details>
