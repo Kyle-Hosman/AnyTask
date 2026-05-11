@@ -59,12 +59,6 @@ Native on every Apple device. Home Screen and Lock Screen widgets, Siri, Apple S
 ## FAQ
 
 <details>
-<summary><b>How much does AnyTask cost?</b></summary>
-
-Free to try for 10 days. After that, $1.99/month or $11.99/year as in-app purchases.
-</details>
-
-<details>
 <summary><b>What devices does AnyTask work on?</b></summary>
 
 iPhone, iPad, and Mac. Everything syncs automatically over iCloud.
