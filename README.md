@@ -4,8 +4,6 @@
 
 # AnyTask
 
-### Capture first. Sort later.
-
 **A task manager for people tired of overdesigned productivity systems.**
 
 <a href="https://apps.apple.com/us/app/anytask-reminders-calendar/id1493596172">
