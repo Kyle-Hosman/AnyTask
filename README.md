@@ -2,7 +2,7 @@
 
 **A native task manager for iPhone, iPad, and Mac. Capture first. Sort later.**
 
-[Website](https://anytaskapp.com) · [Download on the App Store](https://apps.apple.com/us/app/anytask-reminders-calendar/id1493596172) · [Report an issue](https://github.com/Kyle-Hosman/AnyTask/issues/new/choose) · [Changelog](./CHANGELOG.md)
+[Website](https://anytaskapp.com) · [Download on the App Store](https://apps.apple.com/us/app/anytask-reminders-calendar/id1493596172) · [Report an issue](https://github.com/Kyle-Hosman/AnyTask/issues/new) · [Changelog](./CHANGELOG.md)
 
 This repository is the public home for AnyTask: a place to file bug reports, request features, browse changelogs, and find resources like Apple Shortcuts and the press kit. The app itself is closed-source.
 
@@ -54,20 +54,13 @@ AnyTask is a fast, native task and reminders app for the Apple ecosystem, built 
   </tr>
 </table>
 
-## Pricing
-
-Free to download with a 10-day trial of AnyTask Pro. After that:
-
-- **Monthly:** $1.99
-- **Yearly:** $11.99
-
 ## Requirements
 
 iOS 18.2 or later. Available on iPhone, iPad, and Mac.
 
 ## Get in Touch
 
-- **Bug reports and feature requests:** [open an issue](https://github.com/Kyle-Hosman/AnyTask/issues/new/choose)
+- **Bug reports and feature requests:** [open an issue](https://github.com/Kyle-Hosman/AnyTask/issues/new)
 - **General support:** see [anytaskapp.com](https://anytaskapp.com)
 - **Privacy policy:** [anytaskapp.com/privacy](https://anytaskapp.com/privacy)
 
