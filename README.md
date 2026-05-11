@@ -44,12 +44,22 @@ Type dates inline the way you'd say them — "Tuesday @2pm" — and AnyTask unde
   <img src="./images/Screenshots/en-US-4-Calendar.png" alt="Calendar view synced with Apple Calendar" width="260">
 </div>
 
-## iPhone, iPad, and Mac
+## Glanceable, anywhere
 
-Native on every Apple device. Home Screen and Lock Screen widgets, Siri, Apple Shortcuts, and full offline support. Everything syncs automatically over iCloud.
+Home Screen widgets, Lock Screen widgets, and StandBy support — see what's next without opening the app. Pin a single list, your Today view, or your full inbox.
 
 <div align="center">
   <img src="./images/Screenshots/en-US-5-Widgets.png" alt="Home Screen and Lock Screen widgets" width="260">
+</div>
+
+## iPhone, iPad, and Mac
+
+Native on every Apple device. Full offline support, Siri, Apple Shortcuts, and automatic iCloud sync — start a task on one device, finish it on another.
+
+<div align="center">
+  <img src="./images/Screenshots/iPhone.png" alt="AnyTask on iPhone" width="200">
+  <img src="./images/Screenshots/iPad.png" alt="AnyTask on iPad" width="320">
+  <img src="./images/Screenshots/Mac.png" alt="AnyTask on Mac" width="380">
 </div>
 
 ---
