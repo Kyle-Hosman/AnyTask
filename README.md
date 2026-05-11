@@ -6,6 +6,8 @@
 
 This repository is the public home for AnyTask: a place to file bug reports, request features, browse changelogs, and find resources like Apple Shortcuts and the press kit. The app itself is closed-source.
 
+![AnyTask hero](./Screenshots/en-US-1-Hero%20Shot.png)
+
 ---
 
 ## What is AnyTask?
@@ -38,6 +40,14 @@ AnyTask is a fast, native task and reminders app for the Apple ecosystem, built 
 - Import from Apple Notes
 - Dark Mode and larger text accessibility support
 - Fully functional offline
+
+## Screenshots
+
+| Customize | Collaborate |
+| :-: | :-: |
+| ![Customize lists with colors and icons](./Screenshots/en-US-2-Customize.png) | ![Real-time shared lists via iCloud](./Screenshots/en-US-3-Collaboration.png) |
+| **Calendar** | **Widgets** |
+| ![Calendar view synced with Apple Calendar](./Screenshots/en-US-4-Calendar.png) | ![Home Screen and Lock Screen widgets](./Screenshots/en-US-5-Widgets.png) |
 
 ## Pricing
 
