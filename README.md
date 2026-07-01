@@ -23,36 +23,36 @@ Share it instantly.**
 
 ---
 
-## As organized as you want to be
+## Sort tasks into lists in seconds
 
-Create lists in seconds. Give them a color, an icon, and only the structure they need. Add subtasks, notes, photos, links, and due dates. Drag tasks between lists — no rules, no rigid project hierarchies.
+Capture everything in your "Any" inbox the moment it pops into your head. Later, pick a list and tap to file each task where it belongs. Clearing your mind has never been faster.
 
 <div align="center">
-  <img src="./images/Screenshots/en-US-2-Customize.png" alt="Customize lists with colors and icons" width="260">
+  <img src="https://anytaskapp.com/images/Screenshots/cropped/en-US-2-Sort.png" alt="Customize lists with colors and icons" width="260">
 </div>
 
-## Shared lists, zero confusion
+## As organized as you want to be
 
-Share any list with family, friends, or coworkers over iCloud. Real-time sync. No accounts, no invites, no extra apps. Tap two iPhones together to share via NFC.
+Organize tasks into customizable lists with your own colors and icons. Add subtasks, attach photos and links, and set due dates. Drag and drop between lists — or sort straight from your Any inbox — for quick weekly planning or clearing a backlog. Already use Apple Notes? Import your existing checklists in a tap.
 
 <div align="center">
-  <img src="./images/Screenshots/en-US-3-Collaboration.png" alt="Real-time shared lists via iCloud" width="260">
+  <img src="https://anytaskapp.com/images/Screenshots/cropped/en-US-2-Customize.png" alt="Customize lists with colors and icons" width="260">
+</div>
+
+## Share lists with anyone
+
+Collaborate with family, friends, or coworkers through seamless iCloud sharing. Lists stay in sync across everyone's devices in real time.
+
+<div align="center">
+  <img src="https://anytaskapp.com/images/Screenshots/cropped/en-US-3-Collaboration.png" alt="Real-time shared lists via iCloud" width="260">
 </div>
 
 ## Never miss a deadline
 
-Type dates inline the way you'd say them — "Tuesday @2pm" — and AnyTask understands. Set reminders, repeat tasks, and see everything in a calendar view that syncs with Apple Calendar.
+Type the date inline — "Tuesday @2pm" — and AnyTask parses it as you go. Get reminders when tasks are due, set recurring tasks on any schedule, and sync with Apple Calendar for a unified view of your day.
 
 <div align="center">
-  <img src="./images/Screenshots/en-US-4-Calendar.png" alt="Calendar view synced with Apple Calendar" width="260">
-</div>
-
-## Glanceable, anywhere
-
-Home Screen widgets, Lock Screen widgets, and StandBy support — see what's next without opening the app. Pin a single list, your Today view, or your full inbox.
-
-<div align="center">
-  <img src="./images/Screenshots/en-US-5-Widgets.png" alt="Home Screen and Lock Screen widgets" width="260">
+  <img src="https://anytaskapp.com/images/Screenshots/cropped/en-US-4-Calendar.png" alt="Calendar view synced with Apple Calendar" width="260">
 </div>
 
 ## iPhone, iPad, and Mac
