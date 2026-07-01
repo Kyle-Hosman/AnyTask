@@ -4,7 +4,10 @@
 
 # AnyTask
 
-**A task manager for people tired of overdesigned productivity systems.**
+**Make a list. Set a reminder.
+Share it instantly.**
+<br>
+*The effortless way to organize tasks for yourself and anyone you want to share lists with.*
 
 <a href="https://apps.apple.com/us/app/anytask-reminders-calendar/id1493596172">
   <img src="./images/AppStore.svg" alt="Download on the App Store" width="200">
